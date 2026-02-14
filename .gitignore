@@ -1,0 +1,15 @@
+# Claude Code IDE settings
+.claude/
+
+# Backups
+*.bak
+*.old
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Development artifacts
+WithClaude/
+OLD/
