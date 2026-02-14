@@ -7,7 +7,7 @@ core:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 core:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")
 core:RegisterEvent("PLAYER_MONEY")
 
-function ToggleNativeLoot(hide)
+function LootEnh_ToggleNativeLoot(hide)
     if hide then
         UIParent:UnregisterEvent("START_LOOT_ROLL")
         UIParent:UnregisterEvent("CANCEL_LOOT_ROLL")
@@ -32,21 +32,21 @@ end
 
 core:SetScript("OnEvent", function(s, e, id, t)
     if e == "PLAYER_LOGIN" then
-        InitializeDB()
+        LootEnh_InitializeDB()
         LootEnh_CreateMainPanel()
         LootEnh_CreateAutoRollPanel()
-        LootEnh_CreateLootFramePanel()
         LootEnh_CreateCustomRulesPanel()
-        LootEnh_CreateProfilesPanel()
+        LootEnh_CreateLootFramePanel()
         LootEnh_CreateSoloPanel()
-        CreateAddonFrames()
+        LootEnh_CreateProfilesPanel()
+        LootEnh_CreateAddonFrames()
         LootEnh_InitSoloMoney()
-        ToggleNativeLoot(MonLootDB.hideNative)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", LootFilter)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", LootFilter)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", SoloLootFilter)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_XP_GAIN", SoloXPFilter)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_FACTION_CHANGE", SoloRepFilter)
+        LootEnh_ToggleNativeLoot(MonLootDB.hideNative)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", LootEnh_LootFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", LootEnh_LootFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", LootEnh_SoloLootFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_XP_GAIN", LootEnh_SoloXPFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_FACTION_CHANGE", LootEnh_SoloRepFilter)
         LootEnh_AutoLoadProfiles()
 
     elseif e == "START_LOOT_ROLL" then
@@ -55,14 +55,14 @@ core:SetScript("OnEvent", function(s, e, id, t)
         local _, name, _, quality, bop, canNeed, canGreed, canDE = GetLootRollItemInfo(id)
 
         -- ANALYSE AUTO
-        local autoAction = MonLootDB.autoRoll and GetAutoRollAction(name, quality, bop, canNeed, canGreed, canDE)
+        local autoAction = MonLootDB.autoRoll and LootEnh_GetAutoRollAction(name, quality, bop, canNeed, canGreed, canDE)
 
         if autoAction then
             RollOnLoot(id, autoAction)
         else
             -- MANUEL : On affiche nos barres personnalisées
             local tex = GetLootRollItemInfo(id)
-            ShowLootBar(id, name, tex, GetLootRollItemLink(id), t)
+            LootEnh_ShowLootBar(id, name, tex, GetLootRollItemLink(id), t)
         end
 
     elseif e == "CONFIRM_LOOT_ROLL" then

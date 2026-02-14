@@ -63,11 +63,11 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 
 Right-click the minimap button or go to **Interface > AddOns > LootEnh** to access all settings panels:
 
-- **Main** — Language, enable/disable group frames and solo display
+- **Main** — Language, enable/disable group frames and solo display, quick profile selection
 - **Auto-Roll** — Rules per item, quality, and custom name-based rules
-- **Loot Frame** — Group bar appearance and chat filter mode
-- **Solo Frame** — Solo bar modules and appearance
 - **Custom Rules** — Add/remove name-based auto-roll rules
+- **Group Frame** — Group bar appearance and chat filter mode
+- **Solo Frame** — Solo bar modules and appearance
 - **Profiles** — Save, load, export, and import configurations
 
 ## Requirements

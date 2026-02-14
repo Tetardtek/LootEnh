@@ -27,7 +27,7 @@ LootEnh_Locales = {
         AUTO_TITLE = "LootEnh - Auto-Roll Settings",
         OPT_ENABLE_AUTO = "Enable Auto-Roll",
         OPT_SKIP_BOP = "Skip BoP Confirmation Dialog",
-        OPT_BOP_PROTECT = "BoP Protection (Manual roll on BoP) exept custom rules",
+        OPT_BOP_PROTECT = "BoP Protection (Manual roll on BoP) except custom rules",
         CAT_GENERAL = "General Rules",
         CAT_SCROLLS = "Scrolls (WF & Mystic)",
         CAT_WORLDFORGED = "Worldforged",
@@ -92,7 +92,7 @@ LootEnh_Locales = {
         PROF_NONE = "(none)",
         PROF_AUTOLOADED = "|cff00ccffLootEnh:|r Auto-loaded %s profile: %s",
         -- Solo Display Keys
-        SOLO_TITLE = "LootEnh - Solo Display",
+        SOLO_TITLE = "LootEnh - Solo Frame",
         SOLO_ENABLE = "Enable Solo Loot Bars",
         SOLO_TEST = "Test",
         SOLO_ANCHOR_TEXT = "Solo Anchor - Drag to move",
@@ -128,6 +128,15 @@ LootEnh_Locales = {
         RARITY_RARE = "Rare",
         RARITY_EPIC = "Epic",
         RARITY_LEGENDARY = "Legendary",
+        -- Main Panel Section Labels
+        GROUP_FRAME_LABEL = "Group Frame:",
+        SOLO_FRAME_LABEL = "Solo Frame:",
+        -- Main Panel Profile Quick-Select
+        PROF_QUICK_TITLE = "Profiles:",
+        PROF_QUICK_AUTOROLL = "Auto-Roll Profile",
+        PROF_QUICK_UI = "UI Profile",
+        -- Helpers
+        GENERAL_RULE_TOOLTIP = "General rule for this category.",
         -- Anchor Keys
         ANCHOR_RESET = "Reset Anchors",
         ANCHOR_TIP_SHIFT_HIDE = "|cff00ff00Shift+Click|r to hide anchors",
@@ -160,7 +169,7 @@ LootEnh_Locales = {
         AUTO_TITLE = "LootEnh - Réglages Auto-Roll",
         OPT_ENABLE_AUTO = "Activer l'Auto-Roll",
         OPT_SKIP_BOP = "Passer la confirmation de liaison (BoP)",
-        OPT_BOP_PROTECT = "Protection BoP (Manuel si l'objet est lié) exepté sur les règle personnalisé",
+        OPT_BOP_PROTECT = "Protection BoP (Manuel si l'objet est lié) excepté sur les règles personnalisées",
         CAT_GENERAL = "Règles Générales",
         CAT_SCROLLS = "Parchemins (WF & Mystique)",
         CAT_WORLDFORGED = "Worldforged",
@@ -225,7 +234,7 @@ LootEnh_Locales = {
         PROF_NONE = "(aucun)",
         PROF_AUTOLOADED = "|cff00ccffLootEnh:|r Profil %s charge automatiquement : %s",
         -- Solo Display Keys
-        SOLO_TITLE = "LootEnh - Affichage Solo",
+        SOLO_TITLE = "LootEnh - Solo Frame",
         SOLO_ENABLE = "Activer les barres de loot solo",
         SOLO_TEST = "Test",
         SOLO_ANCHOR_TEXT = "Ancre Solo - Glisser pour deplacer",
@@ -261,6 +270,15 @@ LootEnh_Locales = {
         RARITY_RARE = "Rare",
         RARITY_EPIC = "Epique",
         RARITY_LEGENDARY = "Legendaire",
+        -- Main Panel Section Labels
+        GROUP_FRAME_LABEL = "Barres de groupe :",
+        SOLO_FRAME_LABEL = "Barres solo :",
+        -- Main Panel Profile Quick-Select
+        PROF_QUICK_TITLE = "Profils :",
+        PROF_QUICK_AUTOROLL = "Profil Auto-Roll",
+        PROF_QUICK_UI = "Profil UI",
+        -- Helpers
+        GENERAL_RULE_TOOLTIP = "Regle generale pour cette categorie.",
         -- Anchor Keys
         ANCHOR_RESET = "Reinitialiser les Ancres",
         ANCHOR_TIP_SHIFT_HIDE = "|cff00ff00Shift+Clic|r pour cacher les ancres",

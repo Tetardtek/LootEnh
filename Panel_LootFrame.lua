@@ -26,7 +26,7 @@ function LootEnh_CreateLootFramePanel()
     btn1:SetPoint("TOPLEFT", 16, -48)
     btn1:SetText(ld.LOOT_TEST_ONE)
     btn1:SetScript("OnClick", function()
-        ShowLootBar(nil, "Test Item", testIcons[1], testNames[1], 10)
+        LootEnh_ShowLootBar(nil, "Test Item", testIcons[1], testNames[1], 10)
     end)
 
     local btn3 = CreateFrame("Button", "LootEnhTestThree", LFPanel, "UIPanelButtonTemplate")
@@ -35,7 +35,7 @@ function LootEnh_CreateLootFramePanel()
     btn3:SetText(ld.LOOT_TEST_THREE)
     btn3:SetScript("OnClick", function()
         for i = 1, 3 do
-            ShowLootBar(nil, "Test Item " .. i, testIcons[i], testNames[i], 10 + i * 2)
+            LootEnh_ShowLootBar(nil, "Test Item " .. i, testIcons[i], testNames[i], 10 + i * 2)
         end
     end)
 
@@ -63,7 +63,7 @@ function LootEnh_CreateLootFramePanel()
 
     -- Controls zone
     local ctrlAnchorY = -80
-    local function OnSettingChanged() RefreshActiveLootFrames() end
+    local function OnSettingChanged() LootEnh_RefreshActiveLootFrames() end
 
     -- Row 1: Strata + Growth Direction dropdowns
     local strataOptions = {"BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG"}

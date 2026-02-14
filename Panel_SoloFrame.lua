@@ -2,7 +2,7 @@ function LootEnh_CreateSoloPanel()
     local ld = L()
 
     local SPanel = CreateFrame("Frame", "LootEnhSoloPanel", UIParent)
-    SPanel.name = "Solo Display"
+    SPanel.name = "Solo Frame"
     SPanel.parent = "LootEnh"
 
     local title = SPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -20,6 +20,23 @@ function LootEnh_CreateSoloPanel()
         LootEnh_TestSoloBars()
     end)
     soloControls[#soloControls + 1] = btnTest
+
+    -- ============================================================
+    -- ScrollFrame: all content below the test button goes inside
+    -- ============================================================
+    local scrollFrame = CreateFrame("ScrollFrame", "LootEnhSoloScroll", SPanel, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 0, -80)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -26, 4)
+
+    local scrollChild = CreateFrame("Frame", "LootEnhSoloScrollChild", scrollFrame)
+    scrollChild:SetWidth(scrollFrame:GetWidth() or 460)
+    scrollChild:SetHeight(800)
+    scrollFrame:SetScrollChild(scrollChild)
+
+    -- Update child width when parent resizes
+    SPanel:SetScript("OnSizeChanged", function(self, w, h)
+        scrollChild:SetWidth(w - 26)
+    end)
 
     -- ============================================================
     -- Local helpers for 3-level settings (MonLootDB.solo[modKey][settingKey])
@@ -136,11 +153,14 @@ function LootEnh_CreateSoloPanel()
             for i, v in ipairs(valueMap) do
                 if v == current then
                     UIDropDownMenu_SetSelectedID(frame, i)
+                    UIDropDownMenu_SetText(frame, options[i])
                     break
                 end
             end
         else
-            UIDropDownMenu_SetSelectedID(frame, current or 1)
+            local idx = current or 1
+            UIDropDownMenu_SetSelectedID(frame, idx)
+            UIDropDownMenu_SetText(frame, options[idx])
         end
 
         frame.Refresh = function()
@@ -153,6 +173,7 @@ function LootEnh_CreateSoloPanel()
                     info.value = i
                     info.func = function(btn)
                         UIDropDownMenu_SetSelectedID(frame, btn.value)
+                        UIDropDownMenu_SetText(frame, options[btn.value])
                         local stored = valueMap and valueMap[btn.value] or btn.value
                         if MonLootDB.solo and MonLootDB.solo[modKey] then
                             MonLootDB.solo[modKey][settingKey] = stored
@@ -166,11 +187,14 @@ function LootEnh_CreateSoloPanel()
                 for i, v in ipairs(valueMap) do
                     if v == val then
                         UIDropDownMenu_SetSelectedID(frame, i)
+                        UIDropDownMenu_SetText(frame, options[i])
                         break
                     end
                 end
             else
-                UIDropDownMenu_SetSelectedID(frame, val or 1)
+                local idx = val or 1
+                UIDropDownMenu_SetSelectedID(frame, idx)
+                UIDropDownMenu_SetText(frame, options[idx])
             end
         end
         table.insert(LootEnh_AllControls, frame)
@@ -194,81 +218,84 @@ function LootEnh_CreateSoloPanel()
         return h
     end
 
+    -- All content is now parented to scrollChild instead of SPanel
+    local C = scrollChild
+
     -- ============================================================
     -- Module: Items (loot)
     -- ============================================================
-    local y = -80
-    CreateModuleHeader(SPanel, y, ld.SOLO_MOD_LOOT, "|cff1eff00")
+    local y = -5
+    CreateModuleHeader(C, y, ld.SOLO_MOD_LOOT, "|cff1eff00")
 
-    ModuleCheck(SPanel, "loot", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
-    ModuleSlider(SPanel, "loot", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
+    ModuleCheck(C, "loot", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
+    ModuleSlider(C, "loot", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
 
     local rarityLabels = {
         ld.RARITY_POOR, ld.RARITY_COMMON, ld.RARITY_UNCOMMON,
         ld.RARITY_RARE, ld.RARITY_EPIC, ld.RARITY_LEGENDARY,
     }
     local rarityValues = {0, 1, 2, 3, 4, 5}
-    ModuleDropdown(SPanel, "loot", "minRarity", ld.SOLO_LOOT_MIN_RARITY, 0, y - 72, 120, rarityLabels, rarityValues)
+    ModuleDropdown(C, "loot", "minRarity", ld.SOLO_LOOT_MIN_RARITY, 0, y - 72, 120, rarityLabels, rarityValues)
 
-    ModuleCheck(SPanel, "loot", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 110)
-    ModuleCheck(SPanel, "loot", "showBagCount", ld.SOLO_LOOT_SHOW_BAG, 200, y - 110)
-    ModuleCheck(SPanel, "loot", "questHighlight", ld.SOLO_LOOT_QUEST_HL, 16, y - 135)
+    ModuleCheck(C, "loot", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 110)
+    ModuleCheck(C, "loot", "showBagCount", ld.SOLO_LOOT_SHOW_BAG, 200, y - 110)
+    ModuleCheck(C, "loot", "questHighlight", ld.SOLO_LOOT_QUEST_HL, 16, y - 135)
 
     -- ============================================================
     -- Module: Gold
     -- ============================================================
-    y = -240
-    CreateModuleHeader(SPanel, y, ld.SOLO_MOD_GOLD, "|cffffd700")
+    y = -165
+    CreateModuleHeader(C, y, ld.SOLO_MOD_GOLD, "|cffffd700")
 
-    ModuleCheck(SPanel, "gold", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
-    ModuleSlider(SPanel, "gold", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
+    ModuleCheck(C, "gold", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
+    ModuleSlider(C, "gold", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
 
-    ModuleCheck(SPanel, "gold", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
-    ModuleCheck(SPanel, "gold", "showSessionTotal", ld.SOLO_GOLD_SESSION, 200, y - 70)
+    ModuleCheck(C, "gold", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
+    ModuleCheck(C, "gold", "showSessionTotal", ld.SOLO_GOLD_SESSION, 200, y - 70)
 
     -- ============================================================
     -- Module: Experience (xp)
     -- ============================================================
-    y = -340
-    CreateModuleHeader(SPanel, y, ld.SOLO_MOD_XP, "|cff8080ff")
+    y = -265
+    CreateModuleHeader(C, y, ld.SOLO_MOD_XP, "|cff8080ff")
 
-    ModuleCheck(SPanel, "xp", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
-    ModuleSlider(SPanel, "xp", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
+    ModuleCheck(C, "xp", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
+    ModuleSlider(C, "xp", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
 
-    ModuleCheck(SPanel, "xp", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
+    ModuleCheck(C, "xp", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
 
     -- ============================================================
     -- Module: Reputation (rep)
     -- ============================================================
-    y = -420
-    CreateModuleHeader(SPanel, y, ld.SOLO_MOD_REP, "|cff40c040")
+    y = -345
+    CreateModuleHeader(C, y, ld.SOLO_MOD_REP, "|cff40c040")
 
-    ModuleCheck(SPanel, "rep", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
-    ModuleSlider(SPanel, "rep", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
+    ModuleCheck(C, "rep", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
+    ModuleSlider(C, "rep", "duration", ld.SOLO_MOD_DURATION, 200, y - 28, 160, 1, 15, 1, false)
 
-    ModuleCheck(SPanel, "rep", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
+    ModuleCheck(C, "rep", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 70)
 
     -- ============================================================
     -- Shared Solo Bar Appearance section
     -- ============================================================
-    local function OnSoloSettingChanged() RefreshActiveSoloFrames() end
+    local function OnSoloSettingChanged() LootEnh_RefreshActiveSoloFrames() end
 
-    local appearY = -520
+    local appearY = -445
 
-    local sepAppear = SPanel:CreateTexture(nil, "ARTWORK")
+    local sepAppear = C:CreateTexture(nil, "ARTWORK")
     sepAppear:SetHeight(1)
     sepAppear:SetPoint("TOPLEFT", 16, appearY)
     sepAppear:SetPoint("TOPRIGHT", -16, appearY)
     sepAppear:SetTexture(0.4, 0.4, 0.4, 0.6)
 
-    local appearTitle = SPanel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local appearTitle = C:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     appearTitle:SetPoint("TOPLEFT", 16, appearY - 15)
     appearTitle:SetText(ld.SOLO_APPEARANCE_TITLE)
 
     -- Row 1: Strata + Growth Direction dropdowns
     local strataOptions = {"BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG"}
     local ddStrata = LootEnh_CreateGenericDropdown(
-        SPanel, 0, appearY - 40, 110, ld.SOLO_STRATA,
+        C, 0, appearY - 40, 110, ld.SOLO_STRATA,
         "solo", "strata", strataOptions, strataOptions, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = ddStrata
@@ -276,33 +303,33 @@ function LootEnh_CreateSoloPanel()
     local growOptions = {ld.SOLO_GROW_UP, ld.SOLO_GROW_DOWN}
     local growValues = {"up", "down"}
     local ddGrow = LootEnh_CreateGenericDropdown(
-        SPanel, 230, appearY - 40, 110, ld.SOLO_GROWTH,
+        C, 230, appearY - 40, 110, ld.SOLO_GROWTH,
         "solo", "growDir", growOptions, growValues, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = ddGrow
 
     -- Row 2: Scale + Alpha sliders
     local slScale = LootEnh_CreateSlider(
-        SPanel, 16, appearY - 115, 180, ld.SOLO_SCALE,
+        C, 16, appearY - 115, 180, ld.SOLO_SCALE,
         "solo", "scale", 0.5, 2.0, 0.05, true, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = slScale
 
     local slAlpha = LootEnh_CreateSlider(
-        SPanel, 250, appearY - 115, 180, ld.SOLO_ALPHA,
+        C, 250, appearY - 115, 180, ld.SOLO_ALPHA,
         "solo", "alpha", 0.1, 1.0, 0.05, true, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = slAlpha
 
     -- Row 3: Spacing + MaxBars sliders
     local slSpacing = LootEnh_CreateSlider(
-        SPanel, 16, appearY - 165, 180, ld.SOLO_SPACING,
+        C, 16, appearY - 165, 180, ld.SOLO_SPACING,
         "solo", "spacing", 0, 20, 1, false, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = slSpacing
 
     local slMaxBars = LootEnh_CreateSlider(
-        SPanel, 250, appearY - 165, 180, ld.SOLO_MAX_BARS,
+        C, 250, appearY - 165, 180, ld.SOLO_MAX_BARS,
         "solo", "maxBars", 1, 10, 1, false, OnSoloSettingChanged
     )
     soloControls[#soloControls + 1] = slMaxBars
@@ -312,19 +339,19 @@ function LootEnh_CreateSoloPanel()
     -- ============================================================
     local sepY = appearY - 210
 
-    local sep = SPanel:CreateTexture(nil, "ARTWORK")
+    local sep = C:CreateTexture(nil, "ARTWORK")
     sep:SetHeight(1)
     sep:SetPoint("TOPLEFT", 16, sepY)
     sep:SetPoint("TOPRIGHT", -16, sepY)
     sep:SetTexture(0.4, 0.4, 0.4, 0.6)
 
     -- Solo Chat Filtering radio buttons
-    local filterTitle = SPanel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local filterTitle = C:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     filterTitle:SetPoint("TOPLEFT", 16, sepY - 15)
     filterTitle:SetText(ld.SOLO_FILTER_TITLE)
 
     local function CreateSoloRadio(id, label, ry)
-        local rb = CreateFrame("CheckButton", "LootEnhSoloRadio" .. id, SPanel, "UIRadioButtonTemplate")
+        local rb = CreateFrame("CheckButton", "LootEnhSoloRadio" .. id, C, "UIRadioButtonTemplate")
         rb:SetPoint("TOPLEFT", 20, ry)
         _G[rb:GetName() .. "Text"]:SetText(label)
         rb:SetChecked(MonLootDB.soloFilterMode == id)
@@ -340,6 +367,9 @@ function LootEnh_CreateSoloPanel()
     CreateSoloRadio(1, ld.SOLO_MODE_NORMAL, sepY - 40)
     CreateSoloRadio(2, ld.SOLO_MODE_CLEAN, sepY - 65)
     CreateSoloRadio(3, ld.SOLO_MODE_SILENCE, sepY - 90)
+
+    -- Set scrollChild height to fit all content
+    scrollChild:SetHeight(math.abs(sepY - 90) + 30)
 
     -- Store controls for gray-out
     LootEnh_PanelState.soloControls = soloControls

@@ -103,6 +103,10 @@ function LootEnh_CreateProfilesPanel()
             if activeProfile and not (MonLootDB.profiles[ptype] and MonLootDB.profiles[ptype][activeProfile]) then
                 activeProfile = nil
             end
+            -- Fall back to "Default" if no profile is associated
+            if not activeProfile and MonLootDB.profiles[ptype] and MonLootDB.profiles[ptype]["Default"] then
+                activeProfile = "Default"
+            end
             selectedProfile = activeProfile
             LootEnh_SafeDropDownInit(dd, function()
                 local info = UIDropDownMenu_CreateInfo()

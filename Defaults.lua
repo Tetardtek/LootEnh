@@ -9,7 +9,7 @@ local defaults = {
     filterMode = 2,
     minimapPos = 45,
     lang = "enUS",
-    hideNative = false,
+    hideNative = true,
     enableLootFrame = true,
     autoRoll = false,
     bopProtection = true,
@@ -105,7 +105,7 @@ local defaults = {
 
 LootEnh_AllControls = {}
 
-function InitializeDB()
+function LootEnh_InitializeDB()
     MonLootDB = MonLootDB or {}
     for k, v in pairs(defaults) do
         if MonLootDB[k] == nil then
@@ -188,7 +188,6 @@ function InitializeDB()
             itemRules = LootEnh_DeepCopy(defaults.itemRules),
             scrollRules = LootEnh_DeepCopy(defaults.scrollRules),
             qualityRules = LootEnh_DeepCopy(defaults.qualityRules),
-            customRules = LootEnh_DeepCopy(defaults.customRules),
             sectionToggles = LootEnh_DeepCopy(defaults.sectionToggles),
             autoRoll = defaults.autoRoll,
             bopProtection = defaults.bopProtection,

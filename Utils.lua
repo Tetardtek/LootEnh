@@ -15,7 +15,7 @@ function LootEnh_DeepCopy(t)
 end
 
 local AUTO_ROLL_KEYS = {
-    "itemRules", "scrollRules", "qualityRules", "customRules",
+    "itemRules", "scrollRules", "qualityRules",
     "sectionToggles", "autoRoll", "bopProtection", "skipBopDialog",
 }
 

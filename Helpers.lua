@@ -47,7 +47,7 @@ function LootEnh_CreateDropdown(parent, x, y, width, label, dbKey, subKey, itemI
             GameTooltip:SetHyperlink("item:" .. itemID)
         else
             GameTooltip:SetText(label, 1, 1, 1)
-            GameTooltip:AddLine("General rule for this category.", 0.8, 0.8, 0.8)
+            GameTooltip:AddLine(L().GENERAL_RULE_TOOLTIP, 0.8, 0.8, 0.8)
         end
         GameTooltip:Show()
     end)
@@ -211,11 +211,14 @@ function LootEnh_CreateGenericDropdown(parent, x, y, width, label, dbKey, subKey
         for i, v in ipairs(valueMap) do
             if v == current then
                 UIDropDownMenu_SetSelectedID(frame, i)
+                UIDropDownMenu_SetText(frame, options[i])
                 break
             end
         end
     else
-        UIDropDownMenu_SetSelectedID(frame, current or 1)
+        local idx = current or 1
+        UIDropDownMenu_SetSelectedID(frame, idx)
+        UIDropDownMenu_SetText(frame, options[idx])
     end
     frame.Refresh = function()
         local val
@@ -228,11 +231,14 @@ function LootEnh_CreateGenericDropdown(parent, x, y, width, label, dbKey, subKey
             for i, v in ipairs(valueMap) do
                 if v == val then
                     UIDropDownMenu_SetSelectedID(frame, i)
+                    UIDropDownMenu_SetText(frame, options[i])
                     break
                 end
             end
         else
-            UIDropDownMenu_SetSelectedID(frame, val or 1)
+            local idx = val or 1
+            UIDropDownMenu_SetSelectedID(frame, idx)
+            UIDropDownMenu_SetText(frame, options[idx])
         end
     end
     table.insert(LootEnh_AllControls, frame)
@@ -301,7 +307,7 @@ function LootEnh_CreateSection(scrollChild, sections, title, color, bodyHeight, 
         cb:SetScript("OnClick", function(self)
             MonLootDB.sectionToggles[toggleKey] = self:GetChecked()
             sec.body:SetAlpha(self:GetChecked() and 1 or 0.35)
-            sec.body:EnableMouse(not self:GetChecked() == false)
+            sec.body:EnableMouse(self:GetChecked())
         end)
         sec.toggle = cb
         cb.Refresh = function()

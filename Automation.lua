@@ -44,7 +44,7 @@ local function IsSectionEnabled(sectionKey)
     return true
 end
 
-function GetAutoRollAction(name, quality, bop, canNeed, canGreed, canDE)
+function LootEnh_GetAutoRollAction(name, quality, bop, canNeed, canGreed, canDE)
     if not MonLootDB.autoRoll then
         return nil
     end

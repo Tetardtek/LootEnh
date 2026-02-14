@@ -3,7 +3,7 @@ local function UpdateMinimapPos(btn, angle)
     btn:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 52 - (80 * math.cos(rad)), (80 * math.sin(rad)) - 52)
 end
 
-function CreateAddonFrames()
+function LootEnh_CreateAddonFrames()
     LootAnchor = CreateFrame("Frame", "LootEnhAnchor", UIParent)
     LootAnchor:SetSize(200, 25);
     LootAnchor:SetPoint("CENTER", MonLootDB.anchorX, MonLootDB.anchorY)

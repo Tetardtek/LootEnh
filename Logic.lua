@@ -1,6 +1,6 @@
 local framePool, activeFrames, historyLines, lootQueue = {}, {}, {}, {}
 
-function RestackLootFrames()
+function LootEnh_RestackLootFrames()
     if not LootAnchor then return end
     local cfg = MonLootDB.lootFrame or {}
     local spacing = cfg.spacing or 5
@@ -25,7 +25,7 @@ local function ShowNextFromQueue()
         -- For queued items with a real rid, recalculate remaining time
         local remaining = item.endT - GetTime()
         if remaining > 0 then
-            ShowLootBar(item.rid, item.name, item.tex, item.link, remaining)
+            LootEnh_ShowLootBar(item.rid, item.name, item.tex, item.link, remaining)
         end
         -- If expired, silently skip it
     end
@@ -40,11 +40,11 @@ local function DismissLootBar(f)
         end
     end
     table.insert(framePool, f)
-    RestackLootFrames()
+    LootEnh_RestackLootFrames()
     ShowNextFromQueue()
 end
 
-function AddToHistory(line)
+function LootEnh_AddToHistory(line)
     if not LootHistory then
         return
     end
@@ -55,7 +55,7 @@ function AddToHistory(line)
     LootHistory.txt:SetText(table.concat(historyLines, "\n"))
 end
 
-function LootFilter(self, event, msg)
+function LootEnh_LootFilter(self, event, msg)
     if MonLootDB.filterMode == 1 or not msg then
         return false
     end
@@ -72,7 +72,7 @@ function LootFilter(self, event, msg)
             local name = clean:match("by%s+([^%s%]]+)") or clean:match("^([^%s]+)") or "???"
             local score = clean:match("(%d+)")
             local type = m:find("need") and "|cff00ff00Need|r" or "|cff00ccffGreed|r"
-            AddToHistory(rItem .. " " .. name .. " : " .. score .. " (" .. type .. ")")
+            LootEnh_AddToHistory(rItem .. " " .. name .. " : " .. score .. " (" .. type .. ")")
             if MonLootDB.filterMode >= 2 then
                 if name:find("You") or name:find("vous") or name == UnitName("player") then
                     return false
@@ -82,7 +82,7 @@ function LootFilter(self, event, msg)
         else
             local winner = clean:match("^([^%s]+)")
             local name = (winner:lower() == "you") and "|cff00ff00YOU|r" or winner
-            AddToHistory(ld.WINNER .. " " .. name .. " " .. rItem)
+            LootEnh_AddToHistory(ld.WINNER .. " " .. name .. " " .. rItem)
             if MonLootDB.filterMode == 3 then
                 return true
             end
@@ -95,7 +95,7 @@ function LootFilter(self, event, msg)
 end
 
 -- Solo chat filters
-function SoloLootFilter(self, event, msg)
+function LootEnh_SoloLootFilter(self, event, msg)
     if MonLootDB.soloFilterMode == 1 or not msg then return false end
     local m = msg:lower()
 
@@ -122,12 +122,12 @@ function SoloLootFilter(self, event, msg)
     return false
 end
 
-function SoloXPFilter(self, event, msg)
+function LootEnh_SoloXPFilter(self, event, msg)
     if MonLootDB.soloFilterMode == 3 then return true end
     return false
 end
 
-function SoloRepFilter(self, event, msg)
+function LootEnh_SoloRepFilter(self, event, msg)
     if MonLootDB.soloFilterMode == 3 then return true end
     return false
 end
@@ -171,6 +171,10 @@ local function GetLootFrame()
         f.s:SetSize(130, 8);
         f.s:SetPoint("TOPLEFT", 60, -25);
         f.s:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        f.s.bg = f.s:CreateTexture(nil, "BACKGROUND")
+        f.s.bg:SetAllPoints()
+        f.s.bg:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        f.s.bg:SetVertexColor(0.2, 0.2, 0.2, 0.8)
         local function B(rt, tx, p)
             local b = CreateFrame("Button", nil, f);
             b:SetSize(25, 25);
@@ -191,17 +195,17 @@ local function GetLootFrame()
     return f
 end
 
-function RefreshActiveLootFrames()
+function LootEnh_RefreshActiveLootFrames()
     local cfg = MonLootDB.lootFrame or {}
     for _, f in ipairs(activeFrames) do
         f:SetFrameStrata(cfg.strata or "MEDIUM")
         f:SetScale(cfg.scale or 1.0)
         f:SetBackdropColor(0, 0, 0, cfg.alpha or 0.95)
     end
-    RestackLootFrames()
+    LootEnh_RestackLootFrames()
 end
 
-function ShowLootBar(rid, name, tex, link, time)
+function LootEnh_ShowLootBar(rid, name, tex, link, time)
     local cfg = MonLootDB.lootFrame or {}
     local maxBars = cfg.maxBars or 4
 
@@ -240,5 +244,5 @@ function ShowLootBar(rid, name, tex, link, time)
     end)
     table.insert(activeFrames, f);
     f:Show()
-    RestackLootFrames()
+    LootEnh_RestackLootFrames()
 end

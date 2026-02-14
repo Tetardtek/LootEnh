@@ -18,9 +18,9 @@ function LootEnh_RefreshAllPanels()
     local cbLF = _G["LootEnhCBEnableLF"]
     if cbLF then cbLF:SetChecked(MonLootDB.enableLootFrame) end
     -- Refresh active loot frames visuals
-    RefreshActiveLootFrames()
+    LootEnh_RefreshActiveLootFrames()
     -- Refresh solo frames visuals
-    RefreshActiveSoloFrames()
+    LootEnh_RefreshActiveSoloFrames()
     -- Refresh solo enable checkbox
     local cbSolo = _G["LootEnhCBEnableSolo"]
     if cbSolo then cbSolo:SetChecked(MonLootDB.solo and MonLootDB.solo.enabled) end
@@ -29,12 +29,18 @@ function LootEnh_RefreshAllPanels()
         local rb = _G["LootEnhSoloRadio" .. i]
         if rb then rb:SetChecked(MonLootDB.soloFilterMode == i) end
     end
+    -- Refresh main panel profile quick-select dropdowns
+    if LootEnh_PanelState.mainProfileDD then
+        for _, dd in ipairs(LootEnh_PanelState.mainProfileDD) do
+            if dd.Refresh then dd.Refresh() end
+        end
+    end
     -- Refresh history panel opacity
     if LootHistory then
         LootHistory:SetBackdropColor(0, 0, 0, MonLootDB.histAlpha)
     end
     -- Refresh native loot toggle
-    ToggleNativeLoot(MonLootDB.hideNative)
+    LootEnh_ToggleNativeLoot(MonLootDB.hideNative)
     -- Reposition anchors after profile load
     if LootAnchor then
         LootAnchor:ClearAllPoints()
@@ -118,16 +124,23 @@ function LootEnh_ImportProfile(str)
     return ptype, data
 end
 
+local PROFILE_TYPE_LABELS = {
+    autoRoll = "Auto-Roll",
+    ui = "UI",
+}
+
 function LootEnh_AutoLoadProfiles()
     local charKey = LootEnh_GetCharKey()
     local assoc = MonLootDB.charProfiles and MonLootDB.charProfiles[charKey]
-    if not assoc then return end
     local ld = L()
     for _, ptype in ipairs({"autoRoll", "ui"}) do
-        local name = assoc[ptype]
+        local label = PROFILE_TYPE_LABELS[ptype] or ptype
+        local name = assoc and assoc[ptype]
         if name and MonLootDB.profiles[ptype] and MonLootDB.profiles[ptype][name] then
             LootEnh_LoadProfile(ptype, name)
-            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_AUTOLOADED, ptype, name))
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_AUTOLOADED, label, name))
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_AUTOLOADED, label, "Default"))
         end
     end
 end

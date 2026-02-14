@@ -180,7 +180,7 @@ end
 -- ShowSoloBanner
 -- ============================================================
 
-function ShowSoloBanner(entryType, icon, text, count, link, isQuest, duration)
+function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, duration)
     if not MonLootDB.solo or not MonLootDB.solo.enabled then return end
 
     local cfg = MonLootDB.solo or {}
@@ -274,7 +274,7 @@ function ShowSoloBanner(entryType, icon, text, count, link, isQuest, duration)
     RestackSoloFrames()
 end
 
-function RefreshActiveSoloFrames()
+function LootEnh_RefreshActiveSoloFrames()
     local cfg = MonLootDB.solo or {}
     for _, f in ipairs(soloActive) do
         f:SetFrameStrata(cfg.strata or "MEDIUM")
@@ -332,7 +332,7 @@ function LootEnh_OnSoloLoot(msg)
     -- Pass link only if showBagCount is enabled
     local passLink = mod.showBagCount and itemLink or nil
 
-    ShowSoloBanner("loot", texture, displayName, itemCount, passLink, isQuest, mod.duration or 5)
+    LootEnh_ShowSoloBanner("loot", texture, displayName, itemCount, passLink, isQuest, mod.duration or 5)
 end
 
 function LootEnh_OnSoloMoney()
@@ -369,7 +369,7 @@ function LootEnh_OnSoloMoney()
     if mod.showSessionTotal then
         txt = txt .. " |cff888888[" .. FormatGold(soloGoldSession) .. "]|r"
     end
-    ShowSoloBanner("gold", GetGoldIcon(diff), txt, nil, nil, false, duration)
+    LootEnh_ShowSoloBanner("gold", GetGoldIcon(diff), txt, nil, nil, false, duration)
     local frame = soloLookup["gold:total"]
     if frame then frame.goldRaw = diff end
 end
@@ -396,7 +396,7 @@ function LootEnh_OnSoloXP(msg)
         end
     end
 
-    ShowSoloBanner("xp", SOLO_XP_ICON, "|cff8080ff+" .. xp .. " XP|r", nil, nil, false, duration)
+    LootEnh_ShowSoloBanner("xp", SOLO_XP_ICON, "|cff8080ff+" .. xp .. " XP|r", nil, nil, false, duration)
     if mod.cumulate then
         local frame = soloLookup["xp:total"]
         if frame then frame.xpRaw = xp end
@@ -435,7 +435,7 @@ function LootEnh_OnSoloRep(msg)
         end
     end
 
-    ShowSoloBanner("rep", SOLO_REP_ICON, "|cff40c040+" .. amount .. " " .. faction .. "|r", nil, nil, false, duration)
+    LootEnh_ShowSoloBanner("rep", SOLO_REP_ICON, "|cff40c040+" .. amount .. " " .. faction .. "|r", nil, nil, false, duration)
     if mod.cumulate then
         local frame = soloLookup["rep:" .. faction]
         if frame then frame.repRaw = amount end
@@ -449,9 +449,9 @@ function LootEnh_TestSoloBars()
     local gd = (s.gold or {}).duration or 4
     local xd = (s.xp or {}).duration or 4
     local rd = (s.rep or {}).duration or 5
-    ShowSoloBanner("loot", "Interface\\Icons\\inv_sword_39", "|cff0070dd[Blade of Test]|r", 2, nil, false, ld)
-    ShowSoloBanner("loot", "Interface\\Icons\\inv_misc_rune_01", "|cffe6cc80[Quest Scroll]|r", 1, nil, true, ld)
-    ShowSoloBanner("gold", SOLO_GOLD_ICONS.gold, FormatGold(12345), nil, nil, false, gd)
-    ShowSoloBanner("xp", SOLO_XP_ICON, "|cff8080ff+150 XP|r", nil, nil, false, xd)
-    ShowSoloBanner("rep", SOLO_REP_ICON, "|cff40c040+75 Stormwind|r", nil, nil, false, rd)
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_sword_39", "|cff0070dd[Blade of Test]|r", 2, nil, false, ld)
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_misc_rune_01", "|cffe6cc80[Quest Scroll]|r", 1, nil, true, ld)
+    LootEnh_ShowSoloBanner("gold", SOLO_GOLD_ICONS.gold, FormatGold(12345), nil, nil, false, gd)
+    LootEnh_ShowSoloBanner("xp", SOLO_XP_ICON, "|cff8080ff+150 XP|r", nil, nil, false, xd)
+    LootEnh_ShowSoloBanner("rep", SOLO_REP_ICON, "|cff40c040+75 Stormwind|r", nil, nil, false, rd)
 end
