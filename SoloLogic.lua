@@ -89,15 +89,17 @@ local function RestackSoloFrames()
     for i, f in ipairs(soloActive) do
         f:ClearAllPoints()
         local offset = (i - 1) * (37 + spacing)
+        local animOff = f.leOffY or 0
         if growUp then
-            f:SetPoint("BOTTOM", SoloAnchor, "TOP", 0, offset)
+            f:SetPoint("BOTTOM", SoloAnchor, "TOP", 0, offset + animOff)
         else
-            f:SetPoint("TOP", SoloAnchor, "BOTTOM", 0, -offset)
+            f:SetPoint("TOP", SoloAnchor, "BOTTOM", 0, -offset + animOff)
         end
     end
 end
 
 local function DismissSoloBar(f)
+    LootEnh_AnimReset(f)
     f:Hide()
     if f.soloKey and soloLookup[f.soloKey] == f then
         soloLookup[f.soloKey] = nil
@@ -136,6 +138,8 @@ local function GetSoloFrame()
         f.i = f:CreateTexture(nil, "ARTWORK")
         f.i:SetSize(24, 24)
         f.i:SetPoint("LEFT", 4, 0)
+        f.i:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        f.ib = LootEnh_CreateIconBorder(f, f.i, 1)
 
         f.t = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         f.t:SetPoint("LEFT", 32, 0)
@@ -150,7 +154,12 @@ local function GetSoloFrame()
         f.x:SetSize(16, 16)
         f.x:SetPoint("RIGHT", -2, 0)
         f.x:SetNormalTexture("Interface\\Buttons\\UI-StopButton")
-        f.x:SetScript("OnClick", function() DismissSoloBar(f) end)
+        f.x:SetScript("OnClick", function()
+            local style = (MonLootDB.solo or {}).animStyle or "fade"
+            if not LootEnh_BeginExit(f, style, DismissSoloBar) then
+                DismissSoloBar(f)
+            end
+        end)
 
         -- Tooltip on hover
         f:EnableMouse(true)
@@ -180,7 +189,7 @@ end
 -- ShowSoloBanner
 -- ============================================================
 
-function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, duration)
+function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, duration, quality)
     if not MonLootDB.solo or not MonLootDB.solo.enabled then return end
 
     local cfg = MonLootDB.solo or {}
@@ -233,6 +242,15 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     local f = GetSoloFrame()
     f.i:SetTexture(icon)
     f.t:SetText(text)
+
+    -- Quality icon border (loot entries only)
+    local qc = quality and LootEnh_QUALITY_COLORS[quality]
+    if qc and (cfg.loot or {}).qualityIconBorder ~= false then
+        f.ib:SetVertexColor(qc[1], qc[2], qc[3], 0.9)
+        f.ib:Show()
+    else
+        f.ib:Hide()
+    end
     f.soloCount = count or 1
     f.soloLink = link
     f.soloKey = lookupKey
@@ -259,15 +277,19 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
 
     f.endT = GetTime() + duration
     f:SetScript("OnUpdate", function(s)
+        if LootEnh_AnimStep(s, RestackSoloFrames) then return end
         local r = s.endT - GetTime()
         if r <= 0 then
             DismissSoloBar(s)
         elseif r < 1 then
             s:SetAlpha(r)
-        else
+        elseif not s.leStyle then
             s:SetAlpha(1)
         end
     end)
+
+    -- Entry animation
+    LootEnh_BeginEntry(f, cfg.animStyle or "fade", (cfg.growDir or "up") == "up", quality, cfg.scale or 1.0)
 
     table.insert(soloActive, f)
     f:Show()
@@ -332,7 +354,7 @@ function LootEnh_OnSoloLoot(msg)
     -- Pass link only if showBagCount is enabled
     local passLink = mod.showBagCount and itemLink or nil
 
-    LootEnh_ShowSoloBanner("loot", texture, displayName, itemCount, passLink, isQuest, mod.duration or 5)
+    LootEnh_ShowSoloBanner("loot", texture, displayName, itemCount, passLink, isQuest, mod.duration or 5, quality)
 end
 
 function LootEnh_OnSoloMoney()
@@ -449,8 +471,8 @@ function LootEnh_TestSoloBars()
     local gd = (s.gold or {}).duration or 4
     local xd = (s.xp or {}).duration or 4
     local rd = (s.rep or {}).duration or 5
-    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_sword_39", "|cff0070dd[Blade of Test]|r", 2, nil, false, ld)
-    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_misc_rune_01", "|cffe6cc80[Quest Scroll]|r", 1, nil, true, ld)
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_sword_39", "|cff0070dd[Blade of Test]|r", 2, nil, false, ld, 3)
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_misc_rune_01", "|cffe6cc80[Quest Scroll]|r", 1, nil, true, ld, 6)
     LootEnh_ShowSoloBanner("gold", SOLO_GOLD_ICONS.gold, FormatGold(12345), nil, nil, false, gd)
     LootEnh_ShowSoloBanner("xp", SOLO_XP_ICON, "|cff8080ff+150 XP|r", nil, nil, false, xd)
     LootEnh_ShowSoloBanner("rep", SOLO_REP_ICON, "|cff40c040+75 Stormwind|r", nil, nil, false, rd)

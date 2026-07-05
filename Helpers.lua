@@ -16,6 +16,27 @@ function LootEnh_CreateCheck(parent, key, label, y)
     return cb
 end
 
+-- Checkbox bound to MonLootDB[dbKey][subKey] — default-ON semantics (nil = checked)
+local checkSubCounter = 0
+function LootEnh_CreateCheckSub(parent, dbKey, subKey, label, x, y, onChange)
+    checkSubCounter = checkSubCounter + 1
+    local cbName = (parent:GetName() or "LootEnhCS") .. "Sub" .. checkSubCounter
+    local cb = CreateFrame("CheckButton", cbName, parent, "InterfaceOptionsCheckButtonTemplate")
+    cb:SetPoint("TOPLEFT", x, y)
+    _G[cbName .. "Text"]:SetText(label)
+    cb:SetChecked(not MonLootDB[dbKey] or MonLootDB[dbKey][subKey] ~= false)
+    cb:SetScript("OnClick", function(self)
+        if not MonLootDB[dbKey] then MonLootDB[dbKey] = {} end
+        MonLootDB[dbKey][subKey] = self:GetChecked() and true or false
+        if onChange then onChange() end
+    end)
+    cb.Refresh = function()
+        cb:SetChecked(not MonLootDB[dbKey] or MonLootDB[dbKey][subKey] ~= false)
+    end
+    table.insert(LootEnh_AllControls, cb)
+    return cb
+end
+
 function LootEnh_CreateDropdown(parent, x, y, width, label, dbKey, subKey, itemID, fallbackIcon)
     dropdownCounter = dropdownCounter + 1
     local parentName = parent:GetName() or ("LootEnhDD" .. dropdownCounter)

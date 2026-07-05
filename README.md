@@ -10,6 +10,13 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 - Draggable anchor to position bars anywhere on screen
 - Built-in Need/Greed/Pass/DE buttons with keyboard shortcuts
 
+### Visual Polish (v1.1)
+- **Entry animations**: None / Fade / Slide / Pop, per frame (group & solo)
+- **Exit fade** on timeout and on Need/Greed/Pass clicks
+- **Epic punch**: a subtle scale kick when an epic+ item drops
+- **Quality theming**: quality-colored icon border and timer bar tint
+- Cropped icons (no baked-in border)
+
 ### Auto-Roll
 - Automatic rolling based on item quality (green, blue, purple, legendary)
 - Pre-configured rules for raid materials (MC, BWL, ZG) and Ascension-specific items (Worldforged, Mystic Scrolls)
@@ -22,10 +29,12 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 - Per-module settings (enable, duration, cumulation)
 - Minimum rarity filter, bag count display, quest item highlighting
 - Session gold total tracker
-- Chat filtering modes: Normal, Clean (hide gray/gold), Silence (hide all)
 
-### Chat Filtering (Group)
-- Three modes: Normal, Filtered (winners & your rolls only), Silence (hide all)
+### Chat Filtering (v1.1 — dedicated Chat panel)
+- Per-source control instead of fixed presets: one **Chat** dropdown per message
+  type (group rolls, solo items, gold, XP, reputation)
+- Items: Show all / Hide grays / Hide all — gold/XP/rep: Show all / Hide all
+- Legacy 3-mode settings migrate automatically
 
 ### Loot History
 - Scrollable log of recent group loot events
@@ -66,8 +75,8 @@ Right-click the minimap button or go to **Interface > AddOns > LootEnh** to acce
 - **Main** — Language, enable/disable group frames and solo display, quick profile selection
 - **Auto-Roll** — Rules per item, quality, and custom name-based rules
 - **Custom Rules** — Add/remove name-based auto-roll rules
-- **Group Frame** — Group bar appearance and chat filter mode
-- **Solo Frame** — Solo bar modules and appearance
+- **Display Frames** — Group + Solo bar appearance, quality theming and entry animation (v1.1)
+- **Chat** — Per-source chat filtering for group and solo messages (v1.1)
 - **Profiles** — Save, load, export, and import configurations
 
 ## Requirements

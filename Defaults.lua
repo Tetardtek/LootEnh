@@ -59,6 +59,9 @@ local defaults = {
         growDir = "up",
         spacing = 5,
         maxBars = 4,
+        qualityBar = true,
+        qualityIconBorder = true,
+        animStyle = "slide",
     },
     solo = {
         enabled = true,
@@ -69,6 +72,7 @@ local defaults = {
         strata = "MEDIUM",
         maxBars = 4,
         growDir = "up",
+        animStyle = "fade",
         -- Module: Items
         loot = {
             enabled = true,
@@ -77,6 +81,8 @@ local defaults = {
             cumulate = true,
             showBagCount = true,
             questHighlight = true,
+            qualityIconBorder = true,
+            chatMode = "all", -- "all" | "hideGray" | "hideAll"
         },
         -- Module: Gold
         gold = {
@@ -84,32 +90,51 @@ local defaults = {
             duration = 4,
             cumulate = true,
             showSessionTotal = false,
+            chatMode = "all", -- "all" | "hideAll"
         },
         -- Module: XP
         xp = {
             enabled = true,
             duration = 4,
             cumulate = true,
+            chatMode = "all",
         },
         -- Module: Reputation
         rep = {
             enabled = true,
             duration = 5,
             cumulate = true,
+            chatMode = "all",
         },
     },
-    soloFilterMode = 1,
     soloAnchorX = 0,
     soloAnchorY = -100,
 }
 
 LootEnh_AllControls = {}
 
+-- Converts the legacy 3-mode soloFilterMode into per-module chatMode.
+-- Runs at init and after loading/importing an old profile.
+function LootEnh_MigrateSoloChat()
+    local mode = MonLootDB and MonLootDB.soloFilterMode
+    if mode == nil then return end
+    local s = MonLootDB.solo or {}
+    if s.loot then
+        s.loot.chatMode = (mode == 3) and "hideAll" or (mode == 2) and "hideGray" or "all"
+    end
+    if s.gold then s.gold.chatMode = (mode >= 2) and "hideAll" or "all" end
+    if s.xp then s.xp.chatMode = (mode == 3) and "hideAll" or "all" end
+    if s.rep then s.rep.chatMode = (mode == 3) and "hideAll" or "all" end
+    MonLootDB.soloFilterMode = nil
+end
+
 function LootEnh_InitializeDB()
     MonLootDB = MonLootDB or {}
     for k, v in pairs(defaults) do
         if MonLootDB[k] == nil then
-            MonLootDB[k] = v
+            -- Deep copy: never hand the defaults table itself to the DB,
+            -- later mutations (migrations, user settings) would poison it
+            MonLootDB[k] = LootEnh_DeepCopy(v)
         elseif type(v) == "table" then
             for sk, sv in pairs(v) do
                 if MonLootDB[k][sk] == nil then
@@ -174,6 +199,9 @@ function LootEnh_InitializeDB()
             end
         end
     end
+    -- Migration: legacy global soloFilterMode → per-module chatMode
+    LootEnh_MigrateSoloChat()
+
     -- Profiles storage
     MonLootDB.profiles = MonLootDB.profiles or {}
     MonLootDB.profiles.autoRoll = MonLootDB.profiles.autoRoll or {}
@@ -202,7 +230,6 @@ function LootEnh_InitializeDB()
             enableLootFrame = defaults.enableLootFrame,
             histAlpha = defaults.histAlpha,
             solo = LootEnh_DeepCopy(defaults.solo),
-            soloFilterMode = defaults.soloFilterMode,
             anchorX = defaults.anchorX,
             anchorY = defaults.anchorY,
             soloAnchorX = defaults.soloAnchorX,

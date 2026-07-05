@@ -5,6 +5,42 @@ function LootEnh_SafeDropDownInit(frame, initFunc, displayMode, level)
     UIDROPDOWNMENU_INIT_MENU = old
 end
 
+-- Item quality colors (rarity 0-6), shared by group and solo bars
+LootEnh_QUALITY_COLORS = {
+    [0] = {0.62, 0.62, 0.62}, -- Poor
+    [1] = {1.00, 1.00, 1.00}, -- Common
+    [2] = {0.12, 1.00, 0.00}, -- Uncommon
+    [3] = {0.00, 0.44, 0.87}, -- Rare
+    [4] = {0.64, 0.21, 0.93}, -- Epic
+    [5] = {1.00, 0.50, 0.00}, -- Legendary
+    [6] = {0.90, 0.80, 0.50}, -- Artifact
+}
+
+local HEX_TO_QUALITY = {
+    ["9d9d9d"] = 0, ["ffffff"] = 1, ["1eff00"] = 2,
+    ["0070dd"] = 3, ["a335ee"] = 4, ["ff8000"] = 5, ["e6cc80"] = 6,
+}
+
+-- Cache-safe: GetItemInfo first, fallback to the link's embedded color code
+function LootEnh_GetQualityFromLink(link)
+    if not link then return nil end
+    local _, _, quality = GetItemInfo(link)
+    if quality then return quality end
+    local hex = link:match("|c%x%x(%x%x%x%x%x%x)")
+    return hex and HEX_TO_QUALITY[hex:lower()] or nil
+end
+
+-- Thin colored frame around an icon texture (BORDER layer, under the ARTWORK icon)
+function LootEnh_CreateIconBorder(f, icon, inset)
+    inset = inset or 2
+    local b = f:CreateTexture(nil, "BORDER")
+    b:SetTexture("Interface\\Buttons\\WHITE8X8")
+    b:SetPoint("TOPLEFT", icon, "TOPLEFT", -inset, inset)
+    b:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", inset, -inset)
+    b:Hide()
+    return b
+end
+
 function LootEnh_DeepCopy(t)
     if type(t) ~= "table" then return t end
     local copy = {}

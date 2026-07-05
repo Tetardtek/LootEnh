@@ -9,10 +9,11 @@ function LootEnh_RestackLootFrames()
     for i, f in ipairs(activeFrames) do
         f:ClearAllPoints()
         local offset = (i - 1) * (70 + spacing)
+        local animOff = f.leOffY or 0
         if growUp then
-            f:SetPoint("BOTTOM", LootAnchor, "TOP", 0, offset)
+            f:SetPoint("BOTTOM", LootAnchor, "TOP", 0, offset + animOff)
         else
-            f:SetPoint("TOP", LootAnchor, "BOTTOM", 0, -offset)
+            f:SetPoint("TOP", LootAnchor, "BOTTOM", 0, -offset + animOff)
         end
     end
 end
@@ -32,6 +33,7 @@ local function ShowNextFromQueue()
 end
 
 local function DismissLootBar(f)
+    LootEnh_AnimReset(f)
     f:Hide()
     for i, fr in ipairs(activeFrames) do
         if fr == f then
@@ -42,6 +44,14 @@ local function DismissLootBar(f)
     table.insert(framePool, f)
     LootEnh_RestackLootFrames()
     ShowNextFromQueue()
+end
+
+-- Fade out then dismiss (falls back to instant when animations are off)
+local function FadeOutLootBar(f)
+    local style = (MonLootDB.lootFrame or {}).animStyle or "slide"
+    if not LootEnh_BeginExit(f, style, DismissLootBar) then
+        DismissLootBar(f)
+    end
 end
 
 function LootEnh_AddToHistory(line)
@@ -94,27 +104,30 @@ function LootEnh_LootFilter(self, event, msg)
     return false
 end
 
--- Solo chat filters
+-- Solo chat filters — per-module chatMode ("all" | "hideGray" | "hideAll")
+local function SoloChatMode(modKey)
+    local mod = MonLootDB.solo and MonLootDB.solo[modKey]
+    return (mod and mod.chatMode) or "all"
+end
+
 function LootEnh_SoloLootFilter(self, event, msg)
-    if MonLootDB.soloFilterMode == 1 or not msg then return false end
+    if not msg then return false end
     local m = msg:lower()
 
     -- Solo loot messages ("You receive loot:" / "Vous recevez")
     if m:find("^you receive loot") or m:find("^vous recevez") then
-        if MonLootDB.soloFilterMode == 3 then
+        local mode = SoloChatMode("loot")
+        if mode == "hideAll" then
             return true
         end
-        if MonLootDB.soloFilterMode == 2 then
-            -- Clean: hide gray items (quality 0 = |cff9d9d9d)
-            if msg:find("|cff9d9d9d") then
-                return true
-            end
+        if mode == "hideGray" and msg:find("|cff9d9d9d") then
+            return true
         end
     end
 
     -- Money messages ("You loot X Gold Y Silver Z Copper")
     if m:find("^you loot") and (m:find("gold") or m:find("silver") or m:find("copper")) then
-        if MonLootDB.soloFilterMode >= 2 then
+        if SoloChatMode("gold") == "hideAll" then
             return true
         end
     end
@@ -122,14 +135,16 @@ function LootEnh_SoloLootFilter(self, event, msg)
     return false
 end
 
+function LootEnh_SoloMoneyFilter(self, event, msg)
+    return SoloChatMode("gold") == "hideAll"
+end
+
 function LootEnh_SoloXPFilter(self, event, msg)
-    if MonLootDB.soloFilterMode == 3 then return true end
-    return false
+    return SoloChatMode("xp") == "hideAll"
 end
 
 function LootEnh_SoloRepFilter(self, event, msg)
-    if MonLootDB.soloFilterMode == 3 then return true end
-    return false
+    return SoloChatMode("rep") == "hideAll"
 end
 
 local function GetLootFrame()
@@ -146,6 +161,8 @@ local function GetLootFrame()
         f.i = f:CreateTexture(nil, "ARTWORK");
         f.i:SetSize(40, 40);
         f.i:SetPoint("LEFT", 10, 0)
+        f.i:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        f.ib = LootEnh_CreateIconBorder(f, f.i)
         -- Tooltip hover zone over icon
         f.tipZone = CreateFrame("Frame", nil, f)
         f.tipZone:SetSize(40, 40)
@@ -184,7 +201,7 @@ local function GetLootFrame()
                 if f.rid then
                     RollOnLoot(f.rid, rt)
                 end
-                DismissLootBar(f)
+                FadeOutLootBar(f)
             end);
             return b
         end
@@ -226,8 +243,23 @@ function LootEnh_ShowLootBar(rid, name, tex, link, time)
     f.t:SetText(link or name)
     f.s:SetMinMaxValues(0, time);
     f.s:SetValue(time);
-    f.s:SetStatusBarColor(0, 1, 0);
     f.endT = GetTime() + time
+
+    -- Quality theming (icon border + timer bar tint)
+    local quality = LootEnh_GetQualityFromLink(link or name)
+    local qc = quality and LootEnh_QUALITY_COLORS[quality]
+    f.quality = quality
+    if qc and cfg.qualityIconBorder ~= false then
+        f.ib:SetVertexColor(qc[1], qc[2], qc[3], 0.9)
+        f.ib:Show()
+    else
+        f.ib:Hide()
+    end
+    if qc and cfg.qualityBar ~= false then
+        f.s:SetStatusBarColor(qc[1], qc[2], qc[3])
+    else
+        f.s:SetStatusBarColor(0, 1, 0)
+    end
 
     -- Apply loot frame settings
     f:SetFrameStrata(cfg.strata or "MEDIUM")
@@ -235,13 +267,18 @@ function LootEnh_ShowLootBar(rid, name, tex, link, time)
     f:SetBackdropColor(0, 0, 0, cfg.alpha or 0.95)
 
     f:SetScript("OnUpdate", function(s)
+        if LootEnh_AnimStep(s, LootEnh_RestackLootFrames) then return end
         local r = s.endT - GetTime()
         if r <= 0 then
-            DismissLootBar(s)
+            FadeOutLootBar(s)
         else
             s.s:SetValue(r)
         end
     end)
+
+    -- Entry animation
+    LootEnh_BeginEntry(f, cfg.animStyle or "slide", (cfg.growDir or "up") == "up", quality, cfg.scale or 1.0)
+
     table.insert(activeFrames, f);
     f:Show()
     LootEnh_RestackLootFrames()
