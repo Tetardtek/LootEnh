@@ -1,11 +1,12 @@
 ## Interface: 30300
-## Title: LootEnh |cff00ccffv1.0|r
+## Title: LootEnh |cff00ccffv1.1|r
 ## Notes: Custom loot bars, history and chat filtering.
 ## SavedVariables: MonLootDB
 
 Locales.lua
 Defaults.lua
 Utils.lua
+Animations.lua
 Helpers.lua
 Profiles.lua
 Logic.lua
@@ -14,8 +15,8 @@ SoloLogic.lua
 Frames.lua
 Panel_Main.lua
 Panel_AutoRoll.lua
-Panel_LootFrame.lua
-Panel_SoloFrame.lua
+Panel_Display.lua
+Panel_Chat.lua
 Panel_CustomRules.lua
 Panel_Profiles.lua
 Core.lua

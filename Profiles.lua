@@ -7,11 +7,6 @@ function LootEnh_RefreshAllPanels()
     for _, ctrl in ipairs(LootEnh_AllControls) do
         if ctrl.Refresh then ctrl.Refresh() end
     end
-    -- Refresh radio buttons on main panel
-    for i = 1, 3 do
-        local rb = _G["LootEnhRadio" .. i]
-        if rb then rb:SetChecked(MonLootDB.filterMode == i) end
-    end
     -- Refresh main panel checkboxes
     local cbHN = _G["LootEnhCBHideNative"]
     if cbHN then cbHN:SetChecked(MonLootDB.hideNative) end
@@ -24,11 +19,6 @@ function LootEnh_RefreshAllPanels()
     -- Refresh solo enable checkbox
     local cbSolo = _G["LootEnhCBEnableSolo"]
     if cbSolo then cbSolo:SetChecked(MonLootDB.solo and MonLootDB.solo.enabled) end
-    -- Refresh solo radio buttons
-    for i = 1, 3 do
-        local rb = _G["LootEnhSoloRadio" .. i]
-        if rb then rb:SetChecked(MonLootDB.soloFilterMode == i) end
-    end
     -- Refresh main panel profile quick-select dropdowns
     if LootEnh_PanelState.mainProfileDD then
         for _, dd in ipairs(LootEnh_PanelState.mainProfileDD) do
@@ -75,6 +65,8 @@ function LootEnh_LoadProfile(ptype, name)
             MonLootDB[k] = LootEnh_DeepCopy(data[k])
         end
     end
+    -- Old profiles may carry the legacy soloFilterMode — convert it
+    LootEnh_MigrateSoloChat()
     -- Memorize char → profile association
     local charKey = LootEnh_GetCharKey()
     MonLootDB.charProfiles[charKey] = MonLootDB.charProfiles[charKey] or {}

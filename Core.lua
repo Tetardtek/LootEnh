@@ -36,8 +36,8 @@ core:SetScript("OnEvent", function(s, e, id, t)
         LootEnh_CreateMainPanel()
         LootEnh_CreateAutoRollPanel()
         LootEnh_CreateCustomRulesPanel()
-        LootEnh_CreateLootFramePanel()
-        LootEnh_CreateSoloPanel()
+        LootEnh_CreateDisplayPanel()
+        LootEnh_CreateChatPanel()
         LootEnh_CreateProfilesPanel()
         LootEnh_CreateAddonFrames()
         LootEnh_InitSoloMoney()
@@ -45,6 +45,7 @@ core:SetScript("OnEvent", function(s, e, id, t)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", LootEnh_LootFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", LootEnh_LootFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", LootEnh_SoloLootFilter)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_MONEY", LootEnh_SoloMoneyFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_XP_GAIN", LootEnh_SoloXPFilter)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_COMBAT_FACTION_CHANGE", LootEnh_SoloRepFilter)
         LootEnh_AutoLoadProfiles()
@@ -73,6 +74,16 @@ core:SetScript("OnEvent", function(s, e, id, t)
 
     elseif e == "CHAT_MSG_LOOT" then
         LootEnh_OnSoloLoot(id)
+        -- Enh bridge: tell BagsEnh about looted items (if installed)
+        if BagsEnh_OnNewLoot and id then
+            local m = id:lower()
+            if m:find("^you receive loot") or m:find("^vous recevez") then
+                local link = id:match("|c%x+|Hitem:.-|h%[.-%]|h|r")
+                if link then
+                    BagsEnh_OnNewLoot(link, tonumber(id:match("x(%d+)")) or 1)
+                end
+            end
+        end
 
     elseif e == "PLAYER_MONEY" then
         LootEnh_OnSoloMoney()
