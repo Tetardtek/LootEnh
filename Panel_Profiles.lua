@@ -1,3 +1,29 @@
+-- Demande confirmation avant d'écraser un profil existant, puis exécute `write`.
+--
+-- Les trois chemins de sauvegarde (Sauvegarder sans sélection, Sauvegarder
+-- sous, Importer) allaient droit à l'écriture : saisir un nom déjà pris
+-- écrasait l'ancien sans un mot, et le message annonçait « sauvegardé » plutôt
+-- qu'« écrasé ». La suppression, elle, demandait confirmation depuis toujours —
+-- et le libellé PROF_CONFIRM_OVERWRITE était traduit dans les deux langues sans
+-- avoir jamais été branché.
+--
+-- Envelopper l'écriture plutôt que patcher chaque site : les trois n'écrivent
+-- pas de la même façon (deux passent par LootEnh_SaveProfile, l'import écrit
+-- directement), et un quatrième chemin ajouté plus tard doit être obligé de
+-- passer par ici.
+local function WithOverwriteGuard(ptype, name, write)
+    local profiles = MonLootDB.profiles and MonLootDB.profiles[ptype]
+    if not profiles or profiles[name] == nil then
+        write()
+        return
+    end
+    local dialog = StaticPopup_Show("LOOTENH_CONFIRM_OVERWRITE",
+        string.format(L().PROF_CONFIRM_OVERWRITE, name))
+    if dialog then
+        dialog.data = { callback = write }
+    end
+end
+
 function LootEnh_CreateProfilesPanel()
     local ld = L()
 
@@ -39,6 +65,21 @@ function LootEnh_CreateProfilesPanel()
         end,
         EditBoxOnEscapePressed = function(self)
             self:GetParent():Hide()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    StaticPopupDialogs["LOOTENH_CONFIRM_OVERWRITE"] = {
+        text = "%s",
+        button1 = YES,
+        button2 = NO,
+        OnAccept = function(self)
+            if self.data and self.data.callback then
+                self.data.callback()
+            end
         end,
         timeout = 0,
         whileDead = true,
@@ -164,10 +205,12 @@ function LootEnh_CreateProfilesPanel()
                 if dialog then
                     dialog.data = {
                         callback = function(name)
-                            LootEnh_SaveProfile(ptype, name)
-                            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_SAVED, name))
-                            selectedProfile = name
-                            RefreshProfileDropdown()
+                            WithOverwriteGuard(ptype, name, function()
+                                LootEnh_SaveProfile(ptype, name)
+                                DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_SAVED, name))
+                                selectedProfile = name
+                                RefreshProfileDropdown()
+                            end)
                         end
                     }
                 end
@@ -184,10 +227,12 @@ function LootEnh_CreateProfilesPanel()
             if dialog then
                 dialog.data = {
                     callback = function(name)
-                        LootEnh_SaveProfile(ptype, name)
-                        DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_SAVED, name))
-                        selectedProfile = name
-                        RefreshProfileDropdown()
+                        WithOverwriteGuard(ptype, name, function()
+                            LootEnh_SaveProfile(ptype, name)
+                            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_SAVED, name))
+                            selectedProfile = name
+                            RefreshProfileDropdown()
+                        end)
                     end
                 }
             end
@@ -292,10 +337,12 @@ function LootEnh_CreateProfilesPanel()
             if dialog then
                 dialog.data = {
                     callback = function(name)
-                        MonLootDB.profiles[ptype][name] = LootEnh_DeepCopy(data)
-                        DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_IMPORTED, name))
-                        impBox:SetText("")
-                        RefreshProfileDropdown()
+                        WithOverwriteGuard(ptype, name, function()
+                            MonLootDB.profiles[ptype][name] = LootEnh_DeepCopy(data)
+                            DEFAULT_CHAT_FRAME:AddMessage(string.format(ld.PROF_IMPORTED, name))
+                            impBox:SetText("")
+                            RefreshProfileDropdown()
+                        end)
                     end
                 }
             end

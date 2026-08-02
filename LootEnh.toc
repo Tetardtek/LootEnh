@@ -1,7 +1,13 @@
 ## Interface: 30300
-## Title: LootEnh |cff00ccffv1.1|r
+## Title: LootEnh
+## Version: 1.2.0
 ## Notes: Custom loot bars, history and chat filtering.
+## Author: Tetardtek
 ## SavedVariables: MonLootDB
+
+# La version vit ICI et nulle part ailleurs. Elle etait auparavant ecrite en dur
+# dans le titre, ou aucun code ne pouvait la lire ni la verifier.
+# Depuis le code : GetAddOnMetadata("LootEnh", "Version").
 
 Locales.lua
 Defaults.lua

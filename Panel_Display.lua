@@ -87,9 +87,10 @@ function LootEnh_CreateDisplayPanel()
     btnReset:SetPoint("LEFT", btn3, "RIGHT", 8, 0)
     btnReset:SetText(ld.ANCHOR_RESET)
     btnReset:SetScript("OnClick", function()
-        MonLootDB.anchorX = 0;      MonLootDB.anchorY = 100
-        MonLootDB.soloAnchorX = 0;   MonLootDB.soloAnchorY = -100
-        MonLootDB.histX = -50;       MonLootDB.histY = 0
+        MonLootDB.anchorX = 0;          MonLootDB.anchorY = 100
+        MonLootDB.soloAnchorX = 0;      MonLootDB.soloAnchorY = -100
+        MonLootDB.progressAnchorX = 250; MonLootDB.progressAnchorY = -100
+        MonLootDB.histX = -50;          MonLootDB.histY = 0
         if LootAnchor then
             LootAnchor:ClearAllPoints()
             LootAnchor:SetPoint("CENTER", 0, 100)
@@ -97,6 +98,10 @@ function LootEnh_CreateDisplayPanel()
         if SoloAnchor then
             SoloAnchor:ClearAllPoints()
             SoloAnchor:SetPoint("CENTER", 0, -100)
+        end
+        if LootEnhProgressAnchor then
+            LootEnhProgressAnchor:ClearAllPoints()
+            LootEnhProgressAnchor:SetPoint("CENTER", 250, -100)
         end
         if LootHistory then
             LootHistory:ClearAllPoints()
@@ -132,7 +137,17 @@ function LootEnh_CreateDisplayPanel()
     local animValues = {"none", "fade", "slide", "pop"}
     local ddGroupAnim = LootEnh_CreateGenericDropdown(C, 0, gy - 215, 110, ld.LOOT_ANIM_STYLE, "lootFrame", "animStyle", animOptions, animValues)
 
-    groupControls = {btn1, btn3, ddStrata, ddGrow, slScale, slAlpha, slSpacing, slMaxBars, cbQualBar, cbQualBorder, ddGroupAnim}
+    -- Opacité de la fenêtre d'historique. Le réglage et son libellé existaient
+    -- tous les deux depuis longtemps sans avoir jamais été reliés : histAlpha
+    -- était lu à la création de la frame, mais rien ne permettait d'y toucher.
+    local slHistAlpha = LootEnh_CreateSlider(C, 250, gy - 210, 180, ld.OPACITY,
+        "histAlpha", nil, 0.1, 1.0, 0.05, true, function()
+            if LootHistory then
+                LootHistory:SetBackdropColor(0, 0, 0, MonLootDB.histAlpha or 0.8)
+            end
+        end)
+
+    groupControls = {btn1, btn3, ddStrata, ddGrow, slScale, slAlpha, slSpacing, slMaxBars, cbQualBar, cbQualBorder, ddGroupAnim, slHistAlpha}
 
     -- ============================================================
     -- Section: Solo Loot Bars
@@ -310,17 +325,24 @@ function LootEnh_CreateDisplayPanel()
         ld.RARITY_RARE, ld.RARITY_EPIC, ld.RARITY_LEGENDARY,
     }
     local rarityValues = {0, 1, 2, 3, 4, 5}
-    ModuleDropdown(C, "loot", "minRarity", ld.SOLO_LOOT_MIN_RARITY, 0, y - 72, 120, rarityLabels, rarityValues)
 
-    ModuleCheck(C, "loot", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 110)
-    ModuleCheck(C, "loot", "showBagCount", ld.SOLO_LOOT_SHOW_BAG, 200, y - 110)
-    ModuleCheck(C, "loot", "questHighlight", ld.SOLO_LOOT_QUEST_HL, 16, y - 135)
-    ModuleCheck(C, "loot", "qualityIconBorder", ld.LOOT_QUALITY_BORDER, 200, y - 135)
+    -- Les trois seuils de rareté vont ensemble et se lisent dans cet ordre :
+    -- ce qui s'affiche, ce qui reste discret, ce qui devient un événement.
+    -- Deux colonnes seulement — le scrollChild fait ~460 px, une troisième
+    -- déborderait (le piège rencontré sur BagsEnh).
+    ModuleDropdown(C, "loot", "minRarity", ld.SOLO_LOOT_MIN_RARITY, 0, y - 72, 110, rarityLabels, rarityValues)
+    ModuleDropdown(C, "loot", "tierMuted", ld.SOLO_LOOT_TIER_MUTED, 230, y - 72, 110, rarityLabels, rarityValues)
+    ModuleDropdown(C, "loot", "tierEvent", ld.SOLO_LOOT_TIER_EVENT, 0, y - 112, 110, rarityLabels, rarityValues)
+
+    ModuleCheck(C, "loot", "cumulate", ld.SOLO_MOD_CUMULATE, 16, y - 150)
+    ModuleCheck(C, "loot", "showBagCount", ld.SOLO_LOOT_SHOW_BAG, 200, y - 150)
+    ModuleCheck(C, "loot", "questHighlight", ld.SOLO_LOOT_QUEST_HL, 16, y - 175)
+    ModuleCheck(C, "loot", "qualityIconBorder", ld.LOOT_QUALITY_BORDER, 200, y - 175)
 
     -- ============================================================
     -- Module: Gold
     -- ============================================================
-    y = SB - 220
+    y = SB - 260
     ModuleHeader(y, ld.SOLO_MOD_GOLD, "|cffffd700")
 
     ModuleCheck(C, "gold", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -332,7 +354,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     -- Module: Experience (xp)
     -- ============================================================
-    y = SB - 320
+    y = SB - 360
     ModuleHeader(y, ld.SOLO_MOD_XP, "|cff8080ff")
 
     ModuleCheck(C, "xp", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -343,7 +365,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     -- Module: Reputation (rep)
     -- ============================================================
-    y = SB - 400
+    y = SB - 440
     ModuleHeader(y, ld.SOLO_MOD_REP, "|cff40c040")
 
     ModuleCheck(C, "rep", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -356,7 +378,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     local function OnSoloSettingChanged() LootEnh_RefreshActiveSoloFrames() end
 
-    local appearY = SB - 500
+    local appearY = SB - 540
     ModuleHeader(appearY, ld.SOLO_APPEARANCE_TITLE, "|cffffffff")
 
     local ddSoloStrata = LootEnh_CreateGenericDropdown(
@@ -396,14 +418,22 @@ function LootEnh_CreateDisplayPanel()
     )
     soloControls[#soloControls + 1] = slSoloMaxBars
 
+    -- Plafond du second flux (or / XP / réputation). Le curseur juste au-dessus
+    -- ne pilote plus que le butin depuis que les deux ont leur propre ancre.
+    local slProgressMaxBars = LootEnh_CreateSlider(
+        C, 16, appearY - 215, 180, ld.SOLO_PROGRESS_MAX_BARS,
+        "solo", "progressMaxBars", 1, 10, 1, false, OnSoloSettingChanged
+    )
+    soloControls[#soloControls + 1] = slProgressMaxBars
+
     local ddSoloAnim = LootEnh_CreateGenericDropdown(
-        C, 0, appearY - 220, 110, ld.LOOT_ANIM_STYLE,
+        C, 0, appearY - 270, 110, ld.LOOT_ANIM_STYLE,
         "solo", "animStyle", animOptions, animValues
     )
     soloControls[#soloControls + 1] = ddSoloAnim
 
-    -- Fit scroll height (last control: solo anim dropdown at appearY - 220)
-    scrollChild:SetHeight(math.abs(appearY - 260) + 30)
+    -- Fit scroll height (last control: solo anim dropdown at appearY - 270)
+    scrollChild:SetHeight(math.abs(appearY - 310) + 30)
 
     -- ============================================================
     -- Gray-out wiring (Enable checkboxes live on the main panel)
