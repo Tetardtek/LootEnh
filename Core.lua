@@ -105,14 +105,7 @@ end)
 
 SLASH_LL1 = "/ll";
 SlashCmdList["LL"] = function()
-    MonLootDB.showAnchor = not MonLootDB.showAnchor
-    if MonLootDB.showAnchor then
-        LootAnchor:Show()
-        SoloAnchor:Show()
-    else
-        LootAnchor:Hide()
-        SoloAnchor:Hide()
-    end
+    LootEnh_SetAnchorsShown(not MonLootDB.showAnchor)
 end
 SLASH_LT1 = "/lt";
 SlashCmdList["LT"] = function()

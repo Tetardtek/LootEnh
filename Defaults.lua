@@ -70,7 +70,8 @@ local defaults = {
         alpha = 0.8,
         spacing = 5,
         strata = "MEDIUM",
-        maxBars = 4,
+        maxBars = 4,           -- plafond du flux de butin
+        progressMaxBars = 3,   -- plafond du flux or / XP / réputation
         growDir = "up",
         animStyle = "fade",
         -- Module: Items
@@ -122,6 +123,11 @@ local defaults = {
     },
     soloAnchorX = 0,
     soloAnchorY = -100,
+    -- Ancre de progression : décalée à droite du butin plutôt qu'au-dessus, pour
+    -- ne rien recouvrir en interface Blizzard par défaut. Reste dans l'écran
+    -- jusqu'en 1366x768, où le centre est à 683 px du bord.
+    progressAnchorX = 250,
+    progressAnchorY = -100,
 }
 
 LootEnh_AllControls = {}

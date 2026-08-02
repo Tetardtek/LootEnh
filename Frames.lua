@@ -3,106 +3,102 @@ local function UpdateMinimapPos(btn, angle)
     btn:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 52 - (80 * math.cos(rad)), (80 * math.sin(rad)) - 52)
 end
 
-function LootEnh_CreateAddonFrames()
-    LootAnchor = CreateFrame("Frame", "LootEnhAnchor", UIParent)
-    LootAnchor:SetSize(200, 25);
-    LootAnchor:SetPoint("CENTER", MonLootDB.anchorX, MonLootDB.anchorY)
-    LootAnchor:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12
-    })
-    LootAnchor:SetBackdropColor(0, 0.4, 0.8, 0.6);
-    LootAnchor:SetMovable(true);
-    LootAnchor:EnableMouse(true)
-    LootAnchor:RegisterForDrag("LeftButton")
+-- Toutes les ancres se montrent et se cachent ENSEMBLE : c'est un mode
+-- « placement », pas un réglage par ancre. Passer par cette liste plutôt que
+-- de nommer les ancres une par une évite d'en oublier une lors d'un ajout —
+-- il y a trois points d'appel (Shift+clic sur une ancre, bouton minimap, /ll).
+local anchors = {}
 
-    local ld = L()
-    local anchorText = LootAnchor:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    anchorText:SetPoint("CENTER", 0, 0)
-    anchorText:SetText(ld.ANCHOR_TEXT)
-
-    LootAnchor:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("LootEnh", 0, 0.8, 1)
-        GameTooltip:AddLine(ld.ANCHOR_TIP1, 1, 1, 1)
-        GameTooltip:AddLine(ld.ANCHOR_TIP2, 1, 1, 1)
-        GameTooltip:AddLine(ld.ANCHOR_TIP_SHIFT_HIDE, 1, 1, 1)
-        GameTooltip:AddLine(ld.ANCHOR_TIP3, 0.7, 0.7, 0.7)
-        GameTooltip:Show()
-    end)
-    LootAnchor:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-    LootAnchor:SetScript("OnMouseUp", function(self, button)
-        if button == "LeftButton" and IsShiftKeyDown() then
-            MonLootDB.showAnchor = false
-            LootAnchor:Hide()
-            SoloAnchor:Hide()
-        end
-    end)
-    LootAnchor:SetScript("OnDragStart", LootAnchor.StartMoving)
-    LootAnchor:SetScript("OnDragStop", function(s)
-        s:StopMovingOrSizing()
-        local cx, cy = s:GetCenter()
-        local px, py = UIParent:GetCenter()
-        local x, y = cx - px, cy - py
-        s:ClearAllPoints()
-        s:SetPoint("CENTER", x, y)
-        MonLootDB.anchorX, MonLootDB.anchorY = x, y
-    end)
-    if not MonLootDB.showAnchor then
-        LootAnchor:Hide()
+function LootEnh_SetAnchorsShown(shown)
+    MonLootDB.showAnchor = (shown and true) or false
+    for _, a in ipairs(anchors) do
+        if shown then a:Show() else a:Hide() end
     end
+end
 
-    -- Solo Anchor (green)
-    SoloAnchor = CreateFrame("Frame", "LootEnhSoloAnchor", UIParent)
-    SoloAnchor:SetSize(200, 25)
-    SoloAnchor:SetPoint("CENTER", MonLootDB.soloAnchorX, MonLootDB.soloAnchorY)
-    SoloAnchor:SetBackdrop({
+-- Fabrique d'ancre : les trois ne diffèrent que par leur couleur, leur clé de
+-- position et leur infobulle. `tip` est une liste de { texte, r, g, b }.
+local function CreateAnchor(frameName, xKey, yKey, color, label, tipTitle, tipColor, tip)
+    local a = CreateFrame("Frame", frameName, UIParent)
+    a:SetSize(200, 25)
+    a:SetPoint("CENTER", MonLootDB[xKey], MonLootDB[yKey])
+    a:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 12
     })
-    SoloAnchor:SetBackdropColor(0, 0.6, 0.2, 0.6)
-    SoloAnchor:SetMovable(true)
-    SoloAnchor:EnableMouse(true)
-    SoloAnchor:RegisterForDrag("LeftButton")
+    a:SetBackdropColor(color[1], color[2], color[3], 0.6)
+    a:SetMovable(true)
+    a:EnableMouse(true)
+    a:RegisterForDrag("LeftButton")
 
-    local soloAnchorText = SoloAnchor:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    soloAnchorText:SetPoint("CENTER", 0, 0)
-    soloAnchorText:SetText(ld.SOLO_ANCHOR_TEXT)
+    local txt = a:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    txt:SetPoint("CENTER", 0, 0)
+    txt:SetText(label)
 
-    SoloAnchor:SetScript("OnEnter", function(self)
+    a:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("LootEnh Solo", 0, 0.8, 0.3)
-        GameTooltip:AddLine(ld.ANCHOR_TIP1, 1, 1, 1)
-        GameTooltip:AddLine(ld.ANCHOR_TIP_SHIFT_HIDE, 1, 1, 1)
-        GameTooltip:AddLine(ld.SOLO_ANCHOR_TIP, 0.7, 0.7, 0.7)
+        GameTooltip:AddLine(tipTitle, tipColor[1], tipColor[2], tipColor[3])
+        for _, line in ipairs(tip) do
+            GameTooltip:AddLine(line[1], line[2] or 1, line[3] or 1, line[4] or 1)
+        end
         GameTooltip:Show()
     end)
-    SoloAnchor:SetScript("OnLeave", function()
+    a:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
-    SoloAnchor:SetScript("OnMouseUp", function(self, button)
+    a:SetScript("OnMouseUp", function(self, button)
         if button == "LeftButton" and IsShiftKeyDown() then
-            MonLootDB.showAnchor = false
-            LootAnchor:Hide()
-            SoloAnchor:Hide()
+            LootEnh_SetAnchorsShown(false)
         end
     end)
-    SoloAnchor:SetScript("OnDragStart", SoloAnchor.StartMoving)
-    SoloAnchor:SetScript("OnDragStop", function(s)
+    a:SetScript("OnDragStart", a.StartMoving)
+    a:SetScript("OnDragStop", function(s)
         s:StopMovingOrSizing()
         local cx, cy = s:GetCenter()
         local px, py = UIParent:GetCenter()
         local x, y = cx - px, cy - py
         s:ClearAllPoints()
         s:SetPoint("CENTER", x, y)
-        MonLootDB.soloAnchorX, MonLootDB.soloAnchorY = x, y
+        MonLootDB[xKey], MonLootDB[yKey] = x, y
     end)
+
+    anchors[#anchors + 1] = a
+    return a
+end
+
+function LootEnh_CreateAddonFrames()
+    local ld = L()
+
+    LootAnchor = CreateAnchor("LootEnhAnchor", "anchorX", "anchorY",
+        { 0, 0.4, 0.8 }, ld.ANCHOR_TEXT, "LootEnh", { 0, 0.8, 1 }, {
+            { ld.ANCHOR_TIP1 },
+            { ld.ANCHOR_TIP2 },
+            { ld.ANCHOR_TIP_SHIFT_HIDE },
+            { ld.ANCHOR_TIP3, 0.7, 0.7, 0.7 },
+        })
+
+    SoloAnchor = CreateAnchor("LootEnhSoloAnchor", "soloAnchorX", "soloAnchorY",
+        { 0, 0.6, 0.2 }, ld.SOLO_ANCHOR_TEXT, "LootEnh Solo", { 0, 0.8, 0.3 }, {
+            { ld.ANCHOR_TIP1 },
+            { ld.ANCHOR_TIP_SHIFT_HIDE },
+            { ld.SOLO_ANCHOR_TIP, 0.7, 0.7, 0.7 },
+        })
+
+    -- Ancre de progression (or / XP / réputation). Séparée du butin parce que
+    -- ces flux se disputaient le même plafond de barres : un gain d'XP pouvait
+    -- chasser un objet épique de l'écran. La globale est créée par CreateFrame
+    -- sous le nom passé ici — préfixée, contrairement aux deux ci-dessus qui
+    -- restent à renommer.
+    CreateAnchor("LootEnhProgressAnchor", "progressAnchorX", "progressAnchorY",
+        { 0.7, 0.5, 0 }, ld.PROGRESS_ANCHOR_TEXT, "LootEnh Progression", { 1, 0.8, 0.2 }, {
+            { ld.ANCHOR_TIP1 },
+            { ld.ANCHOR_TIP_SHIFT_HIDE },
+            { ld.PROGRESS_ANCHOR_TIP, 0.7, 0.7, 0.7 },
+        })
+
     if not MonLootDB.showAnchor then
-        SoloAnchor:Hide()
+        LootEnh_SetAnchorsShown(false)
     end
 
     LootHistory = CreateFrame("Frame", "LootEnhHistory", UIParent)
@@ -178,14 +174,7 @@ function LootEnh_CreateAddonFrames()
     end)
     btn:SetScript("OnClick", function(self, b)
         if b == "LeftButton" and IsShiftKeyDown() then
-            MonLootDB.showAnchor = not MonLootDB.showAnchor
-            if MonLootDB.showAnchor then
-                LootAnchor:Show()
-                SoloAnchor:Show()
-            else
-                LootAnchor:Hide()
-                SoloAnchor:Hide()
-            end
+            LootEnh_SetAnchorsShown(not MonLootDB.showAnchor)
         elseif b == "LeftButton" then
             MonLootDB.hideHistory = not MonLootDB.hideHistory
             if MonLootDB.hideHistory then

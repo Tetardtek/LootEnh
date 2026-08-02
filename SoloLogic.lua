@@ -1,4 +1,28 @@
-local soloPool, soloActive, soloLookup = {}, {}, {}
+local soloPool, soloLookup = {}, {}
+
+-- Deux flux distincts, chacun avec son ancre et son plafond de barres.
+--
+-- Le butin (objets) et la progression (or, XP, réputation) partageaient la même
+-- liste et le même maxBars : un simple gain d'XP pouvait donc évincer un objet
+-- épique de l'écran. Ils n'ont pourtant rien à s'échanger — l'un est fait
+-- d'événements identifiables, l'autre de quantités cumulatives.
+--
+-- Le pool de frames reste commun : une frame est entièrement reconfigurée à
+-- chaque affichage (hauteur, icône, opacité), elle peut donc servir aux deux.
+local channels = {
+    loot = {
+        active = {}, anchorName = "LootEnhSoloAnchor",
+        maxKey = "maxBars", maxDefault = 4,
+    },
+    progress = {
+        active = {}, anchorName = "LootEnhProgressAnchor",
+        maxKey = "progressMaxBars", maxDefault = 3,
+    },
+}
+
+local function ChannelOf(entryType)
+    return (entryType == "loot") and channels.loot or channels.progress
+end
 local previousMoney = 0
 local soloGoldSession = 0
 
@@ -100,8 +124,9 @@ function LootEnh_LootTier(quality)
     return { height = 32, durMul = 1, alphaMul = 1, border = true }
 end
 
-local function RestackSoloFrames()
-    if not SoloAnchor then return end
+local function RestackChannel(ch)
+    local anchor = _G[ch.anchorName]
+    if not anchor then return end
     local cfg = MonLootDB.solo or {}
     local spacing = cfg.spacing or 5
     local growUp = (cfg.growDir or "up") == "up"
@@ -110,16 +135,23 @@ local function RestackSoloFrames()
     -- les hauteurs RÉELLES au lieu de multiplier un pas fixe, sinon les barres
     -- discrètes laissent des trous et les barres d'événement se chevauchent.
     local offset = 0
-    for _, f in ipairs(soloActive) do
+    for _, f in ipairs(ch.active) do
         f:ClearAllPoints()
         local animOff = f.leOffY or 0
         if growUp then
-            f:SetPoint("BOTTOM", SoloAnchor, "TOP", 0, offset + animOff)
+            f:SetPoint("BOTTOM", anchor, "TOP", 0, offset + animOff)
         else
-            f:SetPoint("TOP", SoloAnchor, "BOTTOM", 0, -offset + animOff)
+            f:SetPoint("TOP", anchor, "BOTTOM", 0, -offset + animOff)
         end
         offset = offset + (f:GetHeight() or 32) + spacing
     end
+end
+
+-- Sans argument : c'est aussi le rappel passé aux animations, qui ne savent pas
+-- quel canal a bougé. Repositionner les deux coûte quelques SetPoint.
+local function RestackSoloFrames()
+    RestackChannel(channels.loot)
+    RestackChannel(channels.progress)
 end
 
 local function DismissSoloBar(f)
@@ -128,10 +160,13 @@ local function DismissSoloBar(f)
     if f.soloKey and soloLookup[f.soloKey] == f then
         soloLookup[f.soloKey] = nil
     end
-    for i, fr in ipairs(soloActive) do
-        if fr == f then
-            table.remove(soloActive, i)
-            break
+    local ch = f.channel
+    if ch then
+        for i, fr in ipairs(ch.active) do
+            if fr == f then
+                table.remove(ch.active, i)
+                break
+            end
         end
     end
     -- Clean cumulation fields
@@ -218,7 +253,11 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
 
     local cfg = MonLootDB.solo or {}
     duration = duration or 5
-    local maxBars = cfg.maxBars or 4
+
+    -- Chaque canal a son propre plafond : le butin ne se fait plus chasser de
+    -- l'écran par un gain d'XP, et inversement.
+    local ch = ChannelOf(entryType)
+    local maxBars = cfg[ch.maxKey] or ch.maxDefault
 
     -- La gradation ne concerne que les objets : l'or, l'XP et la réputation
     -- n'ont pas de rareté, ils gardent le rendu normal.
@@ -265,11 +304,12 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     end
 
     -- Cap check
-    if #soloActive >= maxBars then
-        DismissSoloBar(soloActive[1])
+    if #ch.active >= maxBars then
+        DismissSoloBar(ch.active[1])
     end
 
     local f = GetSoloFrame()
+    f.channel = ch
 
     -- Toujours réappliquer : les frames sont recyclées par le pool, celle-ci a
     -- pu servir de barre d'événement (44 px) au butin précédent.
@@ -339,17 +379,21 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     -- Entry animation
     LootEnh_BeginEntry(f, cfg.animStyle or "fade", (cfg.growDir or "up") == "up", quality, cfg.scale or 1.0)
 
-    table.insert(soloActive, f)
+    table.insert(ch.active, f)
     f:Show()
     RestackSoloFrames()
 end
 
 function LootEnh_RefreshActiveSoloFrames()
     local cfg = MonLootDB.solo or {}
-    for _, f in ipairs(soloActive) do
-        f:SetFrameStrata(cfg.strata or "MEDIUM")
-        f:SetScale(cfg.scale or 1.0)
-        f:SetBackdropColor(0, 0, 0, cfg.alpha or 0.8)
+    for _, c in pairs(channels) do
+        for _, f in ipairs(c.active) do
+            f:SetFrameStrata(cfg.strata or "MEDIUM")
+            f:SetScale(cfg.scale or 1.0)
+            -- L'opacité du palier est conservée : la réappliquer telle quelle
+            -- effacerait la mise en retrait des objets communs.
+            f:SetBackdropColor(0, 0, 0, (cfg.alpha or 0.8) * (f.baseAlpha or 1))
+        end
     end
     RestackSoloFrames()
 end
