@@ -77,7 +77,20 @@ local defaults = {
         loot = {
             enabled = true,
             duration = 5,
-            minRarity = 2,
+            -- Filtre DUR : en dessous, l'objet n'apparaît pas du tout. Il valait
+            -- 2 (vert), ce qui rendait le commun invisible — seule réponse au
+            -- volume dont disposait l'addon. La gradation ci-dessous permet
+            -- désormais de le montrer sans encombrer, donc le filtre s'ouvre.
+            minRarity = 0,
+            -- Gradation : la rareté décide du coût visuel de l'objet. En dessous
+            -- de tierMuted il est discret (fin, bref, effacé) ; à partir de
+            -- tierEvent il est mis en scène (haut, long, vif). Écarter les deux
+            -- seuils rapproche le rendu du « tri par signal » : bruit à peine
+            -- visible d'un côté, événement franc de l'autre.
+            graded = true,
+            tierMuted = 2,   -- < 2 (médiocre, commun)      → discret
+            tierEvent = 3,   -- >= 3 (rare, épique, …)      → événement
+            tierSound = false,  -- son sur le palier événement (à essayer en jeu)
             cumulate = true,
             showBagCount = true,
             questHighlight = true,
@@ -128,21 +141,30 @@ function LootEnh_MigrateSoloChat()
     MonLootDB.soloFilterMode = nil
 end
 
-function LootEnh_InitializeDB()
-    MonLootDB = MonLootDB or {}
-    for k, v in pairs(defaults) do
-        if MonLootDB[k] == nil then
-            -- Deep copy: never hand the defaults table itself to the DB,
-            -- later mutations (migrations, user settings) would poison it
-            MonLootDB[k] = LootEnh_DeepCopy(v)
-        elseif type(v) == "table" then
-            for sk, sv in pairs(v) do
-                if MonLootDB[k][sk] == nil then
-                    MonLootDB[k][sk] = sv
-                end
-            end
+-- Complète la DB avec ce qui manque, à TOUTE profondeur, sans jamais écraser un
+-- réglage existant du joueur.
+--
+-- Deux raisons d'être récursive plutôt que limitée à deux niveaux :
+--   • un réglage ajouté dans une sous-table déjà présente (solo.loot, solo.gold)
+--     n'atteignait jamais la DB d'un joueur existant — il restait indéfiniment
+--     nil, donc invisible et non réglable dans les panneaux ;
+--   • la copie profonde s'applique partout. L'ancienne sous-boucle affectait la
+--     table de defaults PAR RÉFÉRENCE : la modifier depuis les options
+--     empoisonnait les valeurs par défaut pour le reste de la session, ce que
+--     le commentaire du niveau supérieur interdisait explicitement.
+local function FillDefaults(dst, src)
+    for k, v in pairs(src) do
+        if dst[k] == nil then
+            dst[k] = LootEnh_DeepCopy(v)
+        elseif type(v) == "table" and type(dst[k]) == "table" then
+            FillDefaults(dst[k], v)
         end
     end
+end
+
+function LootEnh_InitializeDB()
+    MonLootDB = MonLootDB or {}
+    FillDefaults(MonLootDB, defaults)
     -- WoW SavedVariables drops empty tables on reload, ensure they exist
     MonLootDB.customRules = MonLootDB.customRules or {}
     MonLootDB.lootFrame = MonLootDB.lootFrame or {}

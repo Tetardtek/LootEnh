@@ -1,5 +1,6 @@
 local core = CreateFrame("Frame")
 core:RegisterEvent("START_LOOT_ROLL")
+core:RegisterEvent("CANCEL_LOOT_ROLL")
 core:RegisterEvent("CONFIRM_LOOT_ROLL")
 core:RegisterEvent("PLAYER_LOGIN")
 core:RegisterEvent("CHAT_MSG_LOOT")
@@ -66,6 +67,12 @@ core:SetScript("OnEvent", function(s, e, id, t)
             LootEnh_ShowLootBar(id, name, tex, GetLootRollItemLink(id), t)
         end
 
+    elseif e == "CANCEL_LOOT_ROLL" then
+        -- Le serveur clôt le jet : la barre correspondante n'a plus de sens.
+        -- LootEnh désenregistre CANCEL_LOOT_ROLL d'UIParent quand il masque la
+        -- fenêtre native — plus personne n'écoutait cet événement.
+        if LootEnh_CancelLootBar then LootEnh_CancelLootBar(id) end
+
     elseif e == "CONFIRM_LOOT_ROLL" then
         if MonLootDB.skipBopDialog then
             ConfirmLootRoll(id, t)
@@ -106,6 +113,10 @@ SlashCmdList["LL"] = function()
         LootAnchor:Hide()
         SoloAnchor:Hide()
     end
+end
+SLASH_LT1 = "/lt";
+SlashCmdList["LT"] = function()
+    if LootEnh_TestLootTiers then LootEnh_TestLootTiers() end
 end
 SLASH_LH1 = "/lh";
 SlashCmdList["LH"] = function()

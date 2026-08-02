@@ -80,21 +80,45 @@ end
 -- Frame management
 -- ============================================================
 
+-- Coût visuel d'un objet selon sa rareté. Trois paliers seulement : régler sept
+-- raretés à la main serait ingérable, et le but n'est pas la nuance mais le
+-- CONTRASTE — qu'un objet commun se lise du coin de l'œil et qu'un objet rare
+-- arrête le regard.
+--   discret   : fin, bref, effacé, sans liseré de qualité
+--   normal    : le rendu historique de l'addon
+--   événement : haut, tenu plus longtemps, opaque, liseré vif
+function LootEnh_LootTier(quality)
+    local mod = (MonLootDB.solo or {}).loot or {}
+    if mod.graded == false or not quality then
+        return { height = 32, durMul = 1, alphaMul = 1, border = true }
+    end
+    if quality < (mod.tierMuted or 2) then
+        return { height = 20, durMul = 0.5, alphaMul = 0.55, border = false }
+    elseif quality >= (mod.tierEvent or 3) then
+        return { height = 44, durMul = 1.6, alphaMul = 1, border = true, event = true }
+    end
+    return { height = 32, durMul = 1, alphaMul = 1, border = true }
+end
+
 local function RestackSoloFrames()
     if not SoloAnchor then return end
     local cfg = MonLootDB.solo or {}
     local spacing = cfg.spacing or 5
     local growUp = (cfg.growDir or "up") == "up"
 
-    for i, f in ipairs(soloActive) do
+    -- Les hauteurs varient d'une barre à l'autre depuis la gradation : on cumule
+    -- les hauteurs RÉELLES au lieu de multiplier un pas fixe, sinon les barres
+    -- discrètes laissent des trous et les barres d'événement se chevauchent.
+    local offset = 0
+    for _, f in ipairs(soloActive) do
         f:ClearAllPoints()
-        local offset = (i - 1) * (37 + spacing)
         local animOff = f.leOffY or 0
         if growUp then
             f:SetPoint("BOTTOM", SoloAnchor, "TOP", 0, offset + animOff)
         else
             f:SetPoint("TOP", SoloAnchor, "BOTTOM", 0, -offset + animOff)
         end
+        offset = offset + (f:GetHeight() or 32) + spacing
     end
 end
 
@@ -196,6 +220,12 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     duration = duration or 5
     local maxBars = cfg.maxBars or 4
 
+    -- La gradation ne concerne que les objets : l'or, l'XP et la réputation
+    -- n'ont pas de rareté, ils gardent le rendu normal.
+    local tier = ((entryType == "loot") and LootEnh_LootTier(quality))
+                 or { height = 32, durMul = 1, alphaMul = 1, border = true }
+    duration = duration * tier.durMul
+
     -- Build lookup key (cumulation logic is now handled per-handler)
     local lookupKey
     if entryType == "gold" then
@@ -240,12 +270,22 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     end
 
     local f = GetSoloFrame()
+
+    -- Toujours réappliquer : les frames sont recyclées par le pool, celle-ci a
+    -- pu servir de barre d'événement (44 px) au butin précédent.
+    f:SetHeight(tier.height)
+    local iconSize = math.max(14, tier.height - 8)
+    f.i:SetSize(iconSize, iconSize)   -- le liseré est ancré dessus, il suit
+    f.baseAlpha = tier.alphaMul
+
     f.i:SetTexture(icon)
     f.t:SetText(text)
 
-    -- Quality icon border (loot entries only)
+    -- Quality icon border (loot entries only) — jamais sur le palier discret :
+    -- un liseré coloré sur un objet commun est précisément le bruit qu'on veut
+    -- retirer.
     local qc = quality and LootEnh_QUALITY_COLORS[quality]
-    if qc and (cfg.loot or {}).qualityIconBorder ~= false then
+    if qc and tier.border and (cfg.loot or {}).qualityIconBorder ~= false then
         f.ib:SetVertexColor(qc[1], qc[2], qc[3], 0.9)
         f.ib:Show()
     else
@@ -273,18 +313,26 @@ function LootEnh_ShowSoloBanner(entryType, icon, text, count, link, isQuest, dur
     -- Apply shared solo visuals
     f:SetFrameStrata(cfg.strata or "MEDIUM")
     f:SetScale(cfg.scale or 1.0)
-    f:SetBackdropColor(0, 0, 0, cfg.alpha or 0.8)
+    f:SetBackdropColor(0, 0, 0, (cfg.alpha or 0.8) * tier.alphaMul)
+
+    -- Le palier événement s'entend autant qu'il se voit. Désactivé par défaut :
+    -- un son sur chaque objet rare devient vite fatigant en donjon, c'est à
+    -- essayer avant d'adopter.
+    if tier.event and (cfg.loot or {}).tierSound then
+        PlaySound("LOOTWINDOWCOINSOUND")
+    end
 
     f.endT = GetTime() + duration
     f:SetScript("OnUpdate", function(s)
         if LootEnh_AnimStep(s, RestackSoloFrames) then return end
         local r = s.endT - GetTime()
+        local base = s.baseAlpha or 1
         if r <= 0 then
             DismissSoloBar(s)
         elseif r < 1 then
-            s:SetAlpha(r)
+            s:SetAlpha(r * base)      -- le fondu part de l'opacité du palier
         elseif not s.leStyle then
-            s:SetAlpha(1)
+            s:SetAlpha(base)
         end
     end)
 
@@ -462,6 +510,21 @@ function LootEnh_OnSoloRep(msg)
         local frame = soloLookup["rep:" .. faction]
         if frame then frame.repRaw = amount end
     end
+end
+
+-- Aperçu des trois paliers de gradation, côte à côte (/lt). Trois barres pour
+-- un maxBars de 4 par défaut : elles tiennent toutes, contrairement au test
+-- général ci-dessous qui en envoie cinq et perd les premières.
+-- Le but est de juger le CONTRASTE, pas le contenu : mêmes mots, seule la
+-- rareté change.
+function LootEnh_TestLootTiers()
+    local ld = ((MonLootDB.solo or {}).loot or {}).duration or 5
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_fabric_linen_01",
+        "|cffffffff[Lin brut]|r", 12, nil, false, ld, 1)              -- discret
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_gauntlets_04",
+        "|cff1eff00[Gantelets de mailles]|r", 1, nil, false, ld, 2)   -- normal
+    LootEnh_ShowSoloBanner("loot", "Interface\\Icons\\inv_sword_39",
+        "|cffa335ee[Lame de Sombrelune]|r", 1, nil, false, ld, 4)     -- événement
 end
 
 -- Test function for the panel

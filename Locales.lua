@@ -317,5 +317,8 @@ LootEnh_Locales = {
 
 function L()
     local lang = (MonLootDB and MonLootDB.lang) or "enUS"
-    return LootEnh_Locales[lang]
+    -- Repli obligatoire : sans lui, une langue inconnue (SavedVariable abîmée,
+    -- 3ᵉ locale ajoutée au sélecteur avant sa table) rend nil, et le premier
+    -- ld.QUELQUE_CHOSE fait tomber tout l'addon.
+    return LootEnh_Locales[lang] or LootEnh_Locales["enUS"]
 end

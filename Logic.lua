@@ -147,6 +147,30 @@ function LootEnh_SoloRepFilter(self, event, msg)
     return SoloChatMode("rep") == "hideAll"
 end
 
+-- Ordre de placement, de la DROITE vers la gauche. Lu de gauche à droite ça
+-- donne Besoin, Cupidité, Désenchanter, Passer : exactement l'ordre de la
+-- fenêtre native de WoW. Le geste appris ne change pas quand LootEnh la
+-- remplace.
+local ROLL_ORDER = { 0, 3, 2, 1 }
+
+-- Affiche les seuls jets que le serveur autorise sur cet objet, resserrés sans
+-- trou. Un emplacement laissé vide ferait cliquer à côté ; un bouton affiché
+-- alors qu'il est refusé fait perdre le jet (c'était le cas de Besoin).
+local function LayoutRollButtons(f)
+    local p = 0
+    for _, rt in ipairs(ROLL_ORDER) do
+        local b = f.rollBtns[rt]
+        if f.allowed and f.allowed[rt] then
+            b:ClearAllPoints()
+            b:SetPoint("BOTTOMRIGHT", -10 - (p * 30), 5)
+            b:Show()
+            p = p + 1
+        else
+            b:Hide()
+        end
+    end
+end
+
 local function GetLootFrame()
     local f = table.remove(framePool)
     if not f then
@@ -192,24 +216,78 @@ local function GetLootFrame()
         f.s.bg:SetAllPoints()
         f.s.bg:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         f.s.bg:SetVertexColor(0.2, 0.2, 0.2, 0.8)
-        local function B(rt, tx, p)
+        -- Un bouton par type de jet. Le placement est fait plus tard par
+        -- LayoutRollButtons : il dépend de ce que le serveur autorise sur CET
+        -- objet, donc il ne peut pas être figé à la création.
+        local function B(rt, tx)
             local b = CreateFrame("Button", nil, f);
             b:SetSize(25, 25);
             b:SetNormalTexture(tx);
-            b:SetPoint("BOTTOMRIGHT", -10 - (p * 30), 5)
             b:SetScript("OnClick", function()
-                if f.rid then
-                    RollOnLoot(f.rid, rt)
+                if not f.rid then return end
+
+                -- Le jet est relu au moment du clic, pas à l'affichage : entre
+                -- les deux, il a pu être annulé (objet parti, groupe dissous)
+                -- ou l'action refusée. Sans cette relecture, on fermait la
+                -- barre sur un RollOnLoot que le serveur ignorait — et comme
+                -- la fenêtre native est désenregistrée quand LootEnh prend la
+                -- main, il ne restait AUCUN moyen de jeter autrement : plus de
+                -- boutons, et le décompte à attendre pour rien.
+                local alive, _, _, _, _, cN, cG, cD = GetLootRollItemInfo(f.rid)
+                if not alive then
+                    FadeOutLootBar(f)   -- le jet n'existe plus : la barre ment
+                    return
                 end
-                FadeOutLootBar(f)
+                local allowed = (rt == 0)                 -- Passer : toujours permis
+                             or (rt == 1 and cN)
+                             or (rt == 2 and cG)
+                             or (rt == 3 and cD)
+                if not allowed then return end   -- on NE ferme PAS : les autres choix restent
+
+                RollOnLoot(f.rid, rt)
+
+                -- La barre n'est volontairement PAS fermée ici. Sur un objet
+                -- lié-au-ramassage, RollOnLoot n'enregistre rien : il ouvre une
+                -- confirmation (CONFIRM_LOOT_ROLL). Refuser cette confirmation
+                -- laissait le joueur sans barre ET sans jet — impossible de
+                -- revoter, décompte à attendre pour rien.
+                -- On attend donc CANCEL_LOOT_ROLL, que le serveur envoie quand
+                -- le jet est réellement clos : c'est exactement ce que fait la
+                -- fenêtre native de WoW, qui ne se cache pas non plus au clic.
+                -- Filet de sécurité si le serveur ne l'envoie pas : le minuteur
+                -- de la barre la retire de toute façon à expiration.
             end);
             return b
         end
-        f.b1 = B(0, "Interface\\Buttons\\UI-GroupLoot-Pass-Up", 0);
-        f.b2 = B(2, "Interface\\Buttons\\UI-GroupLoot-Coin-Up", 1);
-        f.b3 = B(1, "Interface\\Buttons\\UI-GroupLoot-Dice-Up", 2)
+        -- Indexés par rollType, l'entier attendu par RollOnLoot.
+        f.rollBtns = {
+            [0] = B(0, "Interface\\Buttons\\UI-GroupLoot-Pass-Up"),
+            [1] = B(1, "Interface\\Buttons\\UI-GroupLoot-Dice-Up"),
+            [2] = B(2, "Interface\\Buttons\\UI-GroupLoot-Coin-Up"),
+            [3] = B(3, "Interface\\Buttons\\UI-GroupLoot-DE-Up"),
+        }
     end
     return f
+end
+
+-- Retire la barre d'un jet annulé côté serveur (objet ramassé par le maître du
+-- butin, groupe dissous, expiration). Sans ça la barre finissait son décompte
+-- dans le vide et proposait des boutons qui ne menaient plus nulle part.
+-- La file d'attente est purgée aussi : un jet annulé ne doit pas remonter.
+function LootEnh_CancelLootBar(rid)
+    if not rid then return end
+    for i = #lootQueue, 1, -1 do
+        if lootQueue[i].rid == rid then
+            table.remove(lootQueue, i)
+        end
+    end
+    for _, f in ipairs(activeFrames) do
+        if f.rid == rid then
+            f.rid = nil          -- coupe l'action avant l'animation de sortie
+            FadeOutLootBar(f)
+            return
+        end
+    end
 end
 
 function LootEnh_RefreshActiveLootFrames()
@@ -239,6 +317,15 @@ function LootEnh_ShowLootBar(rid, name, tex, link, time)
     f.rid = rid;
     f.link = link;
     f.itemName = name;
+
+    -- Les capacités sont relues ICI plutôt que transmises depuis Core : c'est
+    -- la seule façon qu'elles décrivent l'état du jet au moment où la barre
+    -- s'affiche. Une barre sortie de la file d'attente peut l'être plusieurs
+    -- secondes après l'événement, et un paramètre transporté serait périmé.
+    local _, _, _, _, _, canNeed, canGreed, canDE = GetLootRollItemInfo(rid)
+    f.allowed = { [0] = true, [1] = canNeed, [2] = canGreed, [3] = canDE }
+    LayoutRollButtons(f)
+
     f.i:SetTexture(tex);
     f.t:SetText(link or name)
     f.s:SetMinMaxValues(0, time);
