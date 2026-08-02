@@ -342,7 +342,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     -- Module: Gold
     -- ============================================================
-    y = SB - 260
+    y = SB - 265
     ModuleHeader(y, ld.SOLO_MOD_GOLD, "|cffffd700")
 
     ModuleCheck(C, "gold", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -354,7 +354,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     -- Module: Experience (xp)
     -- ============================================================
-    y = SB - 360
+    y = SB - 365
     ModuleHeader(y, ld.SOLO_MOD_XP, "|cff8080ff")
 
     ModuleCheck(C, "xp", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -365,7 +365,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     -- Module: Reputation (rep)
     -- ============================================================
-    y = SB - 440
+    y = SB - 465
     ModuleHeader(y, ld.SOLO_MOD_REP, "|cff40c040")
 
     ModuleCheck(C, "rep", "enabled", ld.SOLO_MOD_ENABLE, 16, y - 22)
@@ -378,7 +378,7 @@ function LootEnh_CreateDisplayPanel()
     -- ============================================================
     local function OnSoloSettingChanged() LootEnh_RefreshActiveSoloFrames() end
 
-    local appearY = SB - 540
+    local appearY = SB - 565
     ModuleHeader(appearY, ld.SOLO_APPEARANCE_TITLE, "|cffffffff")
 
     local ddSoloStrata = LootEnh_CreateGenericDropdown(

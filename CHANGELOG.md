@@ -35,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   copying them.
 - **An unknown language brought the addon down.** The locale lookup had no
   fallback, so any value outside enUS/frFR resolved to nothing.
+- **Solo bar settings were writing over the group bar widgets.** Sliders and
+  dropdowns took their global name from their parent frame plus the setting
+  key, so the two sections of the Display panel — which configure the same
+  things for two different kinds of bar — produced identical names. The solo
+  widgets overwrote the group ones, their labels landed on the wrong objects,
+  and their own range text stayed at the Blizzard default. Names are now
+  unique regardless of parent or key.
+- Reputation settings overlapped the Experience section in the Display panel.
 
 ### Added
 

@@ -39,8 +39,9 @@ end
 
 function LootEnh_CreateDropdown(parent, x, y, width, label, dbKey, subKey, itemID, fallbackIcon)
     dropdownCounter = dropdownCounter + 1
-    local parentName = parent:GetName() or ("LootEnhDD" .. dropdownCounter)
-    local frame = CreateFrame("Frame", parentName .. dbKey .. (subKey or ""), parent, "UIDropDownMenuTemplate")
+    -- Ce helper-ci incluait dbKey, donc pas de collision constatee — mais il
+    -- dependait quand meme du parent et des cles. Compteur, comme les autres.
+    local frame = CreateFrame("Frame", "LootEnhDD" .. dropdownCounter, parent, "UIDropDownMenuTemplate")
     frame:SetPoint("TOPLEFT", x, y)
     UIDropDownMenu_SetWidth(frame, width)
 
@@ -124,8 +125,16 @@ end
 
 function LootEnh_CreateSlider(parent, x, y, width, label, dbKey, subKey, min, max, step, isFloat, onChange)
     sliderCounter = sliderCounter + 1
-    local parentName = parent:GetName() or ("LootEnhSL" .. sliderCounter)
-    local slider = CreateFrame("Slider", parentName .. (subKey or dbKey), parent, "OptionsSliderTemplate")
+    -- Le nom global est tire du COMPTEUR, jamais du parent et de la cle.
+    --
+    -- Il valait « nomDuParent .. cle » : dans un panneau ou tout partage le meme
+    -- parent, deux sections qui reglent la meme chose (scale, alpha, spacing,
+    -- maxBars pour les barres de groupe ET pour les barres solo) produisaient le
+    -- MEME nom. Les widgets du second ecrasaient ceux du premier, et les
+    -- _G[nom .. "Low"/"High"/"Text"] resolvaient vers les mauvais objets : les
+    -- curseurs solo gardaient les libelles Blizzard par defaut (« Bas »/« Haut »)
+    -- et ecrivaient les leurs sur ceux du groupe.
+    local slider = CreateFrame("Slider", "LootEnhSlider" .. sliderCounter, parent, "OptionsSliderTemplate")
     slider:SetPoint("TOPLEFT", x, y)
     slider:SetWidth(width)
     slider:SetMinMaxValues(min, max)
@@ -186,8 +195,9 @@ end
 
 function LootEnh_CreateGenericDropdown(parent, x, y, width, label, dbKey, subKey, options, valueMap, onChange)
     dropdownCounter = dropdownCounter + 1
-    local parentName = parent:GetName() or ("LootEnhGDD" .. dropdownCounter)
-    local frame = CreateFrame("Frame", parentName .. (subKey or dbKey), parent, "UIDropDownMenuTemplate")
+    -- Meme collision que pour les curseurs : « strata », « growDir » et
+    -- « animStyle » existent dans la section groupe ET dans la section solo.
+    local frame = CreateFrame("Frame", "LootEnhGenDD" .. dropdownCounter, parent, "UIDropDownMenuTemplate")
     frame:SetPoint("TOPLEFT", x, y)
     UIDropDownMenu_SetWidth(frame, width)
 
