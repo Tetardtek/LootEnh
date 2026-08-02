@@ -34,6 +34,16 @@ end
 core:SetScript("OnEvent", function(s, e, id, t)
     if e == "PLAYER_LOGIN" then
         LootEnh_InitializeDB()
+        -- Declaration au hub AllEnh, sans dependance : s'il est absent, la
+        -- ligne ne fait rien. C'est lui qui decouvre les addons Enh presents et
+        -- porte le controle de version pour toute la suite — un seul
+        -- verificateur, une seule annonce, au lieu de trois.
+        if AllEnh_Register then
+            AllEnh_Register("LootEnh", {
+                addon = "LootEnh",
+                url = "https://github.com/Tetardtek/LootEnh/releases/latest",
+            })
+        end
         LootEnh_CreateMainPanel()
         LootEnh_CreateAutoRollPanel()
         LootEnh_CreateCustomRulesPanel()

@@ -1,5 +1,8 @@
 # LootEnh
 
+> **[⬇ Download the latest release](https://github.com/Tetardtek/LootEnh/releases/latest)**
+
+
 A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the default loot roll frames with custom loot bars, adds a loot history panel, auto-roll automation, solo loot display, and chat filtering.
 
 ## Features
