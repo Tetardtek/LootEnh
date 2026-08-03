@@ -44,6 +44,7 @@ LootEnh_Locales = {
         HIST_UNKNOWN = "Winner unknown",
         HIST_YOUR_ROLL = "You: %s",
         HIST_AUTO_ROLL = "Auto: %s",
+        SUITE_ROLLS = "Rolls",
         HIST_FOOTER = "%d rolls kept",
         -- Custom Rules Keys
         CUSTOM_TITLE = "LootEnh - Custom Rules",
@@ -212,6 +213,7 @@ LootEnh_Locales = {
         HIST_UNKNOWN = "Gagnant inconnu",
         HIST_YOUR_ROLL = "Vous : %s",
         HIST_AUTO_ROLL = "Auto : %s",
+        SUITE_ROLLS = "Jets",
         HIST_FOOTER = "%d jets conservés",
         ROLL_MANUAL = "Manuel",
         -- Custom Rules Keys

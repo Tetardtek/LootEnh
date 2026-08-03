@@ -39,9 +39,21 @@ core:SetScript("OnEvent", function(s, e, id, t)
         -- porte le controle de version pour toute la suite — un seul
         -- verificateur, une seule annonce, au lieu de trois.
         if AllEnh_Register then
+            -- `actions` : ce que le hub peut proposer en acces rapide. Il ne
+            -- connait aucune de nos fonctions — c'est nous qui les lui tendons,
+            -- au meme titre que l'URL. Un hub plus ancien ignore simplement le
+            -- champ, la declaration reste valide.
             AllEnh_Register("LootEnh", {
                 addon = "LootEnh",
                 url = "https://github.com/Tetardtek/LootEnh/releases/latest",
+                actions = {
+                    {
+                        key = "rolls",
+                        label = L().SUITE_ROLLS,
+                        icon = "Interface\\Icons\\inv_misc_dice_01",
+                        run = function() LootEnh_ToggleHistory() end,
+                    },
+                },
             })
         end
         LootEnh_CreateMainPanel()
