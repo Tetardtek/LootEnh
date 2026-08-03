@@ -1,6 +1,6 @@
 ## Interface: 30300
 ## Title: LootEnh
-## Version: 1.3.0
+## Version: 1.4.0
 ## Notes: Custom loot bars, history and chat filtering.
 ## Author: Tetardtek
 ## SavedVariables: MonLootDB
@@ -12,6 +12,7 @@
 Locales.lua
 Defaults.lua
 Utils.lua
+RollTracker.lua
 Animations.lua
 Helpers.lua
 Profiles.lua
@@ -19,6 +20,7 @@ Logic.lua
 Automation.lua
 SoloLogic.lua
 Frames.lua
+HistoryFrame.lua
 Panel_Main.lua
 Panel_AutoRoll.lua
 Panel_Display.lua

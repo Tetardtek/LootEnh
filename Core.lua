@@ -62,18 +62,37 @@ core:SetScript("OnEvent", function(s, e, id, t)
         LootEnh_AutoLoadProfiles()
 
     elseif e == "START_LOOT_ROLL" then
-        if not MonLootDB.enableLootFrame then return end
+        local tex, name, _, quality, bop, canNeed, canGreed, canDE = GetLootRollItemInfo(id)
 
-        local _, name, _, quality, bop, canNeed, canGreed, canDE = GetLootRollItemInfo(id)
+        -- Le suivi commence AVANT toute condition d'affichage. Observer ce que
+        -- les autres votent garde son sens quand l'auto-roll répond à notre
+        -- place, et même quand les barres sont désactivées : c'est la fenêtre
+        -- des jets qui consomme ces données, pas la barre.
+        LootEnh_RollBegin(id, name, tex, GetLootRollItemLink(id), t)
+
+        -- Tracé AVANT toute sortie anticipée : un jet qui n'apparaît pas dans la
+        -- fenêtre a soit manqué cet événement, soit été clos aussitôt. La ligne
+        -- ci-dessous distingue les deux, ce qu'aucune lecture du code ne peut faire.
+        if LootEnh_RollDebugActive and LootEnh_RollDebugActive() then
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                "|cff00ccff[LootEnh] START id=%s duree=%s barres=%s autoRoll=%s en_cours=%d|r",
+                tostring(id), tostring(t), tostring(MonLootDB.enableLootFrame),
+                tostring(MonLootDB.autoRoll), #LootEnh_GetActiveRolls()))
+        end
+
+        if not MonLootDB.enableLootFrame then return end
 
         -- ANALYSE AUTO
         local autoAction = MonLootDB.autoRoll and LootEnh_GetAutoRollAction(name, quality, bop, canNeed, canGreed, canDE)
 
         if autoAction then
             RollOnLoot(id, autoAction)
+            -- Seul appel explicite qui subsiste : l'accroche sur RollOnLoot a
+            -- déjà enregistré le vote, mais elle ne peut pas savoir qu'il vient
+            -- de l'auto-roll. Ce marquage n'ajoute que cette origine.
+            LootEnh_RollMarkMyVote(id, autoAction, true)
         else
             -- MANUEL : On affiche nos barres personnalisées
-            local tex = GetLootRollItemInfo(id)
             LootEnh_ShowLootBar(id, name, tex, GetLootRollItemLink(id), t)
         end
 
@@ -81,7 +100,16 @@ core:SetScript("OnEvent", function(s, e, id, t)
         -- Le serveur clôt le jet : la barre correspondante n'a plus de sens.
         -- LootEnh désenregistre CANCEL_LOOT_ROLL d'UIParent quand il masque la
         -- fenêtre native — plus personne n'écoutait cet événement.
+        if LootEnh_RollDebugActive and LootEnh_RollDebugActive() then
+            local r = LootEnh_GetRoll(id)
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                "|cffff9900[LootEnh] CANCEL id=%s apres %.1fs|r",
+                tostring(id), r and (GetTime() - r.startT) or -1))
+        end
         if LootEnh_CancelLootBar then LootEnh_CancelLootBar(id) end
+        -- Notre participation s'arrête, PAS le jet : les autres joueurs votent
+        -- encore. Le suivi continue jusqu'à l'annonce du gagnant.
+        if LootEnh_RollCloseForMe then LootEnh_RollCloseForMe(id) end
 
     elseif e == "CONFIRM_LOOT_ROLL" then
         if MonLootDB.skipBopDialog then
@@ -118,15 +146,17 @@ SlashCmdList["LL"] = function()
     LootEnh_SetAnchorsShown(not MonLootDB.showAnchor)
 end
 SLASH_LT1 = "/lt";
-SlashCmdList["LT"] = function()
-    if LootEnh_TestLootTiers then LootEnh_TestLootTiers() end
+SlashCmdList["LT"] = function(arg)
+    arg = (arg or ""):lower():match("^%s*(%S*)") or ""
+    if arg == "roll" then
+        LootEnh_ToggleRollDebug()
+    elseif arg == "hist" then
+        LootEnh_TestRolls()
+    else
+        LootEnh_TestLootTiers()
+    end
 end
 SLASH_LH1 = "/lh";
 SlashCmdList["LH"] = function()
-    MonLootDB.hideHistory = not MonLootDB.hideHistory
-    if MonLootDB.hideHistory then
-        LootHistory:Hide()
-    else
-        LootHistory:Show()
-    end
+    LootEnh_ToggleHistory()
 end

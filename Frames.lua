@@ -101,37 +101,10 @@ function LootEnh_CreateAddonFrames()
         LootEnh_SetAnchorsShown(false)
     end
 
-    LootHistory = CreateFrame("Frame", "LootEnhHistory", UIParent)
-    LootHistory:SetSize(300, 180);
-    LootHistory:SetPoint("RIGHT", MonLootDB.histX, MonLootDB.histY)
-    LootHistory:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12
-    })
-    LootHistory:SetBackdropColor(0, 0, 0, MonLootDB.histAlpha);
-    LootHistory:SetMovable(true);
-    LootHistory:EnableMouse(true)
-    LootHistory:RegisterForDrag("LeftButton")
-    LootHistory:SetScript("OnDragStart", LootHistory.StartMoving)
-    LootHistory:SetScript("OnDragStop", function(s)
-        s:StopMovingOrSizing()
-        local cx, cy = s:GetCenter()
-        local sw, sh = UIParent:GetWidth(), UIParent:GetHeight()
-        local x = cx - sw
-        local y = cy - sh / 2
-        s:ClearAllPoints()
-        s:SetPoint("RIGHT", x, y)
-        MonLootDB.histX, MonLootDB.histY = x, y
-    end)
-    LootHistory.txt = LootHistory:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    LootHistory.txt:SetPoint("TOPLEFT", 10, -10);
-    LootHistory.txt:SetPoint("BOTTOMRIGHT", -10, 10);
-    LootHistory.txt:SetJustifyH("LEFT");
-    LootHistory.txt:SetJustifyV("TOP")
-    if MonLootDB.hideHistory then
-        LootHistory:Hide()
-    end
+    -- La fenêtre des jets vit dans HistoryFrame.lua : elle a désormais des
+    -- onglets, du défilement et un modèle de données, ce qui n'avait plus rien
+    -- à faire au milieu de la fabrique d'ancres.
+    LootEnh_CreateHistoryFrame()
 
     local btn = CreateFrame("Button", "LootEnhMinimapBtn", Minimap)
     btn:SetSize(31, 31);
@@ -176,12 +149,7 @@ function LootEnh_CreateAddonFrames()
         if b == "LeftButton" and IsShiftKeyDown() then
             LootEnh_SetAnchorsShown(not MonLootDB.showAnchor)
         elseif b == "LeftButton" then
-            MonLootDB.hideHistory = not MonLootDB.hideHistory
-            if MonLootDB.hideHistory then
-                LootHistory:Hide()
-            else
-                LootHistory:Show()
-            end
+            LootEnh_ToggleHistory()
         else
             InterfaceOptionsFrame_OpenToCategory(LootEnhOptionsPanel);
             InterfaceOptionsFrame_OpenToCategory(LootEnhOptionsPanel)

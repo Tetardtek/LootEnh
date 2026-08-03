@@ -6,6 +6,13 @@ local defaults = {
     showAnchor = false,
     hideHistory = true,
     histAlpha = 0.8,
+    histTab = 1,          -- onglet actif à la réouverture : 1 = en cours, 2 = historique
+    histMaxEntries = 50,  -- jets conservés dans le journal
+    -- Journal des jets clos. Persisté volontairement : on /reload souvent, et
+    -- « qui a gagné quoi tout à l'heure » perd tout intérêt s'il s'efface.
+    -- ABSENT de LootEnh_PROFILE_KEYS (Utils.lua) : un profil exporté ne doit pas
+    -- transporter l'historique de son auteur.
+    rollHistory = {},
     filterMode = 2,
     minimapPos = 45,
     lang = "enUS",
@@ -176,6 +183,7 @@ function LootEnh_InitializeDB()
     MonLootDB.lootFrame = MonLootDB.lootFrame or {}
     MonLootDB.sectionToggles = MonLootDB.sectionToggles or {}
     MonLootDB.solo = MonLootDB.solo or {}
+    MonLootDB.rollHistory = MonLootDB.rollHistory or {}
 
     -- Migration: old flat solo format → new modular format
     if MonLootDB.solo.showLoot ~= nil then

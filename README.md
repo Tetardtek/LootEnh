@@ -12,6 +12,8 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 - Configurable scale, opacity, growth direction, spacing, and frame layer
 - Draggable anchor to position bars anywhere on screen
 - Built-in Need/Greed/Pass/DE buttons with keyboard shortcuts
+- **Live roll counts**: how many players took Need, Greed, Disenchant or Pass,
+  updated as they vote — hover them to see who voted what
 
 ### Visual Polish (v1.1)
 - **Entry animations**: None / Fade / Slide / Pop, per frame (group & solo)
@@ -39,8 +41,13 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 - Items: Show all / Hide grays / Hide all — gold/XP/rep: Show all / Hide all
 - Legacy 3-mode settings migrate automatically
 
-### Loot History
-- Scrollable log of recent group loot events
+### Roll Window
+- Two tabs: **Active** (rolls in progress, with their live vote breakdown) and
+  **History** (closed rolls, with the winner and their score)
+- Roll directly from an active row — the only way to vote on rolls queued past
+  the bar cap, which have no bar of their own
+- Scrollable, hover a line for the per-player detail
+- The last 50 closed rolls survive a reload; profiles never carry them
 - Toggle visibility via minimap button or `/lh`
 
 ### Profiles
@@ -62,7 +69,10 @@ A World of Warcraft addon for **Ascension WoW** (3.3.0) that replaces the defaul
 | Command | Action |
 |---------|--------|
 | `/ll` | Toggle loot anchors (group + solo) |
-| `/lh` | Toggle loot history panel |
+| `/lh` | Toggle the roll window |
+| `/lt` | Preview the three loot tiers |
+| `/lt roll` | Log raw system messages and which locale pattern matched them |
+| `/lt hist` | Fill the roll window with fake data (checking layout outside a group) |
 
 ## Minimap Button
 

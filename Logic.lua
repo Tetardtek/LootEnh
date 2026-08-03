@@ -1,4 +1,4 @@
-local framePool, activeFrames, historyLines, lootQueue = {}, {}, {}, {}
+local framePool, activeFrames, lootQueue = {}, {}, {}
 
 function LootEnh_RestackLootFrames()
     if not LootAnchor then return end
@@ -54,49 +54,48 @@ local function FadeOutLootBar(f)
     end
 end
 
-function LootEnh_AddToHistory(line)
-    if not LootHistory then
-        return
+-- Décompte des votes porté par la barre : « deux Besoin, une Cupidité » se lit
+-- sans quitter des yeux l'objet sur lequel on hésite. Appelé par RollTracker à
+-- chaque vote reçu, donc potentiellement pour un jet qui n'a pas de barre
+-- (auto-roll, file d'attente, barres désactivées) — d'où la recherche silencieuse.
+function LootEnh_UpdateBarTally(rid)
+    if not rid then return end
+    for _, f in ipairs(activeFrames) do
+        if f.rid == rid then
+            local roll = LootEnh_GetRoll(rid)
+            f.tally:SetText(roll and LootEnh_RollTallyText(roll, 12) or "")
+            return
+        end
     end
-    table.insert(historyLines, 1, "|cff888888[" .. date("%H:%M") .. "]|r " .. line)
-    if #historyLines > 15 then
-        table.remove(historyLines)
-    end
-    LootHistory.txt:SetText(table.concat(historyLines, "\n"))
 end
 
 function LootEnh_LootFilter(self, event, msg)
+    -- Alimente le modèle AVANT toute décision d'affichage : un message masqué
+    -- du chat doit malgré tout être compté. C'était le défaut de la version
+    -- précédente — les « a choisi Besoin » étaient filtrés sans être lus.
+    if LootEnh_RollParse then LootEnh_RollParse(msg) end
+
     if MonLootDB.filterMode == 1 or not msg then
         return false
     end
-    local ld = L()
+    -- Ce bloc ne décide QUE de la visibilité dans le chat. Il n'extrait plus le
+    -- contenu du message : c'est RollTracker qui le fait, à partir des formats
+    -- de locale plutôt que de mots anglais en dur. Les heuristiques ci-dessous
+    -- restent volontairement telles quelles — le filtrage est un réglage éprouvé
+    -- du joueur, pas le périmètre de ce chantier.
     local clean = msg:gsub("|T.-|t", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
     local m = clean:lower()
 
-    local isRoll = clean:find("Roll %-")
-    local isWinner = m:find("won:")
-
-    if isRoll or isWinner then
-        local rItem = msg:match("for%s+(|Hitem.-|h%[.-%h%]|r)") or msg:match("won:%s+(|Hitem.-|h%[.-%h%]|r)") or ld.ITEM
-        if isRoll then
+    if clean:find("Roll %-") then
+        if MonLootDB.filterMode >= 2 then
             local name = clean:match("by%s+([^%s%]]+)") or clean:match("^([^%s]+)") or "???"
-            local score = clean:match("(%d+)")
-            local type = m:find("need") and "|cff00ff00Need|r" or "|cff00ccffGreed|r"
-            LootEnh_AddToHistory(rItem .. " " .. name .. " : " .. score .. " (" .. type .. ")")
-            if MonLootDB.filterMode >= 2 then
-                if name:find("You") or name:find("vous") or name == UnitName("player") then
-                    return false
-                end
-                return true
+            if name:find("You") or name:find("vous") or name == UnitName("player") then
+                return false
             end
-        else
-            local winner = clean:match("^([^%s]+)")
-            local name = (winner:lower() == "you") and "|cff00ff00YOU|r" or winner
-            LootEnh_AddToHistory(ld.WINNER .. " " .. name .. " " .. rItem)
-            if MonLootDB.filterMode == 3 then
-                return true
-            end
+            return true
         end
+    elseif m:find("won:") and MonLootDB.filterMode == 3 then
+        return true
     end
     if m:find("selected") then
         return true
@@ -216,6 +215,33 @@ local function GetLootFrame()
         f.s.bg:SetAllPoints()
         f.s.bg:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         f.s.bg:SetVertexColor(0.2, 0.2, 0.2, 0.8)
+        -- Décompte des votes des autres joueurs, sous la barre de temps. Placé
+        -- à gauche : les boutons occupent la droite (jusqu'à 4 × 30 px), et
+        -- empiéter dessus ferait cliquer à côté sur un objet à quatre choix.
+        f.tally = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        f.tally:SetPoint("BOTTOMLEFT", 60, 9)
+        f.tally:SetJustifyH("LEFT")
+        -- Zone de survol dédiée : le détail nominatif ne tient pas sur la barre,
+        -- mais « qui a pris Besoin » est justement ce qu'on veut savoir avant de
+        -- cliquer.
+        f.tallyZone = CreateFrame("Frame", nil, f)
+        f.tallyZone:SetSize(92, 18)
+        f.tallyZone:SetPoint("BOTTOMLEFT", 58, 5)
+        f.tallyZone:EnableMouse(true)
+        f.tallyZone:SetScript("OnEnter", function(self)
+            local roll = f.rid and LootEnh_GetRoll(f.rid)
+            local lines = roll and LootEnh_RollVoterLines(roll)
+            if not lines or #lines == 0 then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(f.itemName or "", 1, 1, 1)
+            for _, l in ipairs(lines) do
+                GameTooltip:AddLine(l[1], l[2], l[3], l[4])
+            end
+            GameTooltip:Show()
+        end)
+        f.tallyZone:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
         -- Un bouton par type de jet. Le placement est fait plus tard par
         -- LayoutRollButtons : il dépend de ce que le serveur autorise sur CET
         -- objet, donc il ne peut pas être figé à la création.
@@ -244,6 +270,9 @@ local function GetLootFrame()
                              or (rt == 3 and cD)
                 if not allowed then return end   -- on NE ferme PAS : les autres choix restent
 
+                -- Le suivi n'est pas notifié ici : RollTracker accroche
+                -- RollOnLoot elle-même, donc ce chemin est déjà couvert, au même
+                -- titre que la fenêtre native ou une macro.
                 RollOnLoot(f.rid, rt)
 
                 -- La barre n'est volontairement PAS fermée ici. Sur un objet
@@ -325,6 +354,11 @@ function LootEnh_ShowLootBar(rid, name, tex, link, time)
     local _, _, _, _, _, canNeed, canGreed, canDE = GetLootRollItemInfo(rid)
     f.allowed = { [0] = true, [1] = canNeed, [2] = canGreed, [3] = canDE }
     LayoutRollButtons(f)
+
+    -- Une barre sortie de la file d'attente peut arriver alors que des joueurs
+    -- ont déjà voté : on repart de l'état du modèle, jamais de zéro.
+    local roll = LootEnh_GetRoll(rid)
+    f.tally:SetText(roll and LootEnh_RollTallyText(roll, 12) or "")
 
     f.i:SetTexture(tex);
     f.t:SetText(link or name)
