@@ -1,6 +1,6 @@
 ## Interface: 30300
 ## Title: LootEnh
-## Version: 1.5.0
+## Version: 1.6.0-dev
 ## Notes: Custom loot bars, history and chat filtering.
 ## Author: Tetardtek
 ## SavedVariables: MonLootDB
