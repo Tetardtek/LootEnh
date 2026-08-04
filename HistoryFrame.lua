@@ -351,7 +351,7 @@ local function CreateTab(parent, index, x, onClick)
     local b = CreateFrame("Button", "LootEnhHistoryTab" .. index, parent)
     b:SetSize(120, 22)
     b:SetPoint("TOPLEFT", PAD + x, -32)
-    b:SetBackdrop({
+    LootEnh_Backdrop(b):SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 10,
@@ -384,7 +384,7 @@ function LootEnh_CreateHistoryFrame()
     LootHistory = f
     f:SetSize(FRAME_W, FRAME_H)
     f:SetPoint("RIGHT", MonLootDB.histX, MonLootDB.histY)
-    f:SetBackdrop({
+    LootEnh_Backdrop(f):SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 12,

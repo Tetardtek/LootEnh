@@ -357,5 +357,5 @@ function LootEnh_CreateProfilesPanel()
     y = y - h1 - 15
     BuildProfileSection(ProfPanel, "ui", ld.PROF_UI_SECTION, y)
 
-    InterfaceOptions_AddCategory(ProfPanel)
+    LootEnh_AddOptionsCategory(ProfPanel)
 end

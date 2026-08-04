@@ -32,7 +32,7 @@ function LootEnh_CreateMainPanel()
     lfTitle:SetPoint("TOPLEFT", 16, -130)
     lfTitle:SetText(ld.GROUP_FRAME_LABEL)
 
-    local cbHideNative = CreateFrame("CheckButton", "LootEnhCBHideNative", LootEnhOptionsPanel, "InterfaceOptionsCheckButtonTemplate")
+    local cbHideNative = CreateFrame("CheckButton", "LootEnhCBHideNative", LootEnhOptionsPanel, LootEnh_CheckTemplate())
     cbHideNative:SetPoint("TOPLEFT", 16, -153)
     _G[cbHideNative:GetName() .. "Text"]:SetText(ld.OPT_HIDE_NATIVE)
     cbHideNative:SetChecked(MonLootDB.hideNative)
@@ -41,7 +41,7 @@ function LootEnh_CreateMainPanel()
         LootEnh_ToggleNativeLoot(MonLootDB.hideNative)
     end)
 
-    local cbEnableLF = CreateFrame("CheckButton", "LootEnhCBEnableLF", LootEnhOptionsPanel, "InterfaceOptionsCheckButtonTemplate")
+    local cbEnableLF = CreateFrame("CheckButton", "LootEnhCBEnableLF", LootEnhOptionsPanel, LootEnh_CheckTemplate())
     cbEnableLF:SetPoint("TOPLEFT", 16, -178)
     _G[cbEnableLF:GetName() .. "Text"]:SetText(ld.OPT_ENABLE_LOOTFRAME)
     cbEnableLF:SetChecked(MonLootDB.enableLootFrame)
@@ -51,7 +51,7 @@ function LootEnh_CreateMainPanel()
     soloTitle:SetPoint("TOPLEFT", 16, -215)
     soloTitle:SetText(ld.SOLO_FRAME_LABEL)
 
-    local cbEnableSolo = CreateFrame("CheckButton", "LootEnhCBEnableSolo", LootEnhOptionsPanel, "InterfaceOptionsCheckButtonTemplate")
+    local cbEnableSolo = CreateFrame("CheckButton", "LootEnhCBEnableSolo", LootEnhOptionsPanel, LootEnh_CheckTemplate())
     cbEnableSolo:SetPoint("TOPLEFT", 16, -238)
     _G[cbEnableSolo:GetName() .. "Text"]:SetText(ld.SOLO_ENABLE)
     cbEnableSolo:SetChecked(MonLootDB.solo and MonLootDB.solo.enabled)
@@ -155,5 +155,5 @@ function LootEnh_CreateMainPanel()
         end
     end)
 
-    InterfaceOptions_AddCategory(LootEnhOptionsPanel)
+    LootEnh_AddOptionsCategory(LootEnhOptionsPanel)
 end

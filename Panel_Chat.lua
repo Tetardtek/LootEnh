@@ -119,5 +119,5 @@ function LootEnh_CreateChatPanel()
     RowLabel(-335, ld.SOLO_MOD_REP)
     SoloChatDropdown("rep", -335, chatModes2, chatValues2)
 
-    InterfaceOptions_AddCategory(CPanel)
+    LootEnh_AddOptionsCategory(CPanel)
 end

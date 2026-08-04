@@ -189,5 +189,5 @@ function LootEnh_CreateCustomRulesPanel()
         end
     end
 
-    InterfaceOptions_AddCategory(CRPanel)
+    LootEnh_AddOptionsCategory(CRPanel)
 end

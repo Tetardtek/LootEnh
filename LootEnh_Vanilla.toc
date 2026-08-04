@@ -1,0 +1,44 @@
+## Interface: 11509
+## Title: LootEnh
+## Version: 1.5.0
+## Notes: Custom loot bars, history and chat filtering.
+## Author: Tetardtek
+## SavedVariables: MonLootDB
+
+# .toc SUFFIXE — lu par Classic Era, ignore par le client 3.3.5.
+#
+# Les clients modernes cherchent d'abord <Addon>_<Saveur>.toc (_Vanilla pour
+# Classic Era, _Mainline pour Retail) et retombent sur <Addon>.toc a defaut.
+# Le client 3.3.5 ne connait que <Addon>.toc et ignore celui-ci.
+#
+# Consequence : UN SEUL dossier, un seul code, deux clients — Ascension lit
+# LootEnh.toc (Interface 30300), Classic Era lit celui-ci (11509). C'est ce qui
+# permet de continuer a developper sur CoA sans rien faire deux fois.
+#
+# 🔴 Le seul point de vigilance du montage : cette liste de fichiers est
+# DUPLIQUEE. Un fichier ajoute ici doit l'etre dans les deux .toc, sinon il ne
+# sera pas charge sur l'un des deux clients — et l'addon aura l'air casse sur un
+# seul client, ce qui est le pire des symptomes a diagnostiquer.
+# Un .toc ne peut pas en inclure un autre : c'est une contrainte du format, pas
+# un choix. A verifier a chaque ajout de fichier.
+
+Compat.lua
+Locales.lua
+Defaults.lua
+Utils.lua
+RollTracker.lua
+Animations.lua
+Helpers.lua
+Profiles.lua
+Logic.lua
+Automation.lua
+SoloLogic.lua
+Frames.lua
+HistoryFrame.lua
+Panel_Main.lua
+Panel_AutoRoll.lua
+Panel_Display.lua
+Panel_Chat.lua
+Panel_CustomRules.lua
+Panel_Profiles.lua
+Core.lua

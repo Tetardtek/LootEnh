@@ -2,7 +2,7 @@ local dropdownCounter = 0
 local sliderCounter = 0
 
 function LootEnh_CreateCheck(parent, key, label, y)
-    local cb = CreateFrame("CheckButton", parent:GetName() .. key, parent, "InterfaceOptionsCheckButtonTemplate")
+    local cb = CreateFrame("CheckButton", parent:GetName() .. key, parent, LootEnh_CheckTemplate())
     cb:SetPoint("TOPLEFT", 16, y)
     _G[cb:GetName() .. "Text"]:SetText(label)
     cb:SetChecked(MonLootDB[key])
@@ -21,7 +21,7 @@ local checkSubCounter = 0
 function LootEnh_CreateCheckSub(parent, dbKey, subKey, label, x, y, onChange)
     checkSubCounter = checkSubCounter + 1
     local cbName = (parent:GetName() or "LootEnhCS") .. "Sub" .. checkSubCounter
-    local cb = CreateFrame("CheckButton", cbName, parent, "InterfaceOptionsCheckButtonTemplate")
+    local cb = CreateFrame("CheckButton", cbName, parent, LootEnh_CheckTemplate())
     cb:SetPoint("TOPLEFT", x, y)
     _G[cbName .. "Text"]:SetText(label)
     cb:SetChecked(not MonLootDB[dbKey] or MonLootDB[dbKey][subKey] ~= false)

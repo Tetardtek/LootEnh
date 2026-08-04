@@ -172,7 +172,7 @@ function LootEnh_CreateDisplayPanel()
     local function ModuleCheck(parent, modKey, settingKey, label, x, y)
         moduleCheckCounter = moduleCheckCounter + 1
         local cbName = "LootEnhSoloMod" .. moduleCheckCounter
-        local cb = CreateFrame("CheckButton", cbName, parent, "InterfaceOptionsCheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", cbName, parent, LootEnh_CheckTemplate())
         cb:SetPoint("TOPLEFT", x, y)
         _G[cbName .. "Text"]:SetText(label)
         local mod = MonLootDB.solo and MonLootDB.solo[modKey]
@@ -468,5 +468,5 @@ function LootEnh_CreateDisplayPanel()
         RefreshSoloGray()
     end)
 
-    InterfaceOptions_AddCategory(DPanel)
+    LootEnh_AddOptionsCategory(DPanel)
 end

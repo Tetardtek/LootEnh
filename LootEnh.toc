@@ -9,6 +9,7 @@
 # dans le titre, ou aucun code ne pouvait la lire ni la verifier.
 # Depuis le code : GetAddOnMetadata("LootEnh", "Version").
 
+Compat.lua
 Locales.lua
 Defaults.lua
 Utils.lua

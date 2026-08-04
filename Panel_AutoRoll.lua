@@ -97,5 +97,5 @@ function LootEnh_CreateAutoRollPanel()
     -- Layout initial
     LootEnh_LayoutSections(sections, scrollChild)
 
-    InterfaceOptions_AddCategory(AutoPanel)
+    LootEnh_AddOptionsCategory(AutoPanel)
 end

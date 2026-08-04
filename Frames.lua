@@ -22,7 +22,7 @@ local function CreateAnchor(frameName, xKey, yKey, color, label, tipTitle, tipCo
     local a = CreateFrame("Frame", frameName, UIParent)
     a:SetSize(200, 25)
     a:SetPoint("CENTER", MonLootDB[xKey], MonLootDB[yKey])
-    a:SetBackdrop({
+    LootEnh_Backdrop(a):SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 12
@@ -151,8 +151,10 @@ function LootEnh_CreateAddonFrames()
         elseif b == "LeftButton" then
             LootEnh_ToggleHistory()
         else
-            InterfaceOptionsFrame_OpenToCategory(LootEnhOptionsPanel);
-            InterfaceOptionsFrame_OpenToCategory(LootEnhOptionsPanel)
+            -- Le double appel vivait ici : contournement communautaire du bug
+            -- de InterfaceOptionsFrame_OpenToCategory en 3.3.5. Il est parti
+            -- dans Compat.lua, ou il ne s'applique qu'au client concerne.
+            LootEnh_OpenOptions(LootEnhOptionsPanel)
         end
     end)
     UpdateMinimapPos(btn, MonLootDB.minimapPos)

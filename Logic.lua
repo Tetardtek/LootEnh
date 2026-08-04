@@ -175,7 +175,7 @@ local function GetLootFrame()
     if not f then
         f = CreateFrame("Frame", nil, UIParent);
         f:SetSize(280, 70)
-        f:SetBackdrop({
+        LootEnh_Backdrop(f):SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8X8",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
             edgeSize = 12
