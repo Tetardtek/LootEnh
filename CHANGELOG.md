@@ -5,6 +5,38 @@ All notable changes to LootEnh are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-05
+
+### Added
+
+- **LootEnh now runs on WoW Classic Era (1.15+) as well as Ascension 3.3.5.**
+  One folder serves both clients: modern clients read the suffixed
+  `LootEnh_Vanilla.toc`, the 3.3.5 client only knows `LootEnh.toc` and ignores it.
+  A compatibility layer (`Compat.lua`, loaded first) resolves which client is
+  running and exposes a single API to the rest of the code — backdrops via mixin,
+  options through `Settings` or `InterfaceOptions`, check button template probed
+  at runtime, addon metadata through `C_AddOns` when present.
+
+  Classic Era is **not** an old client: it is a modern one emulating vanilla
+  content, so its API is *newer* than 3.3.5, not older.
+
+  A compatibility layer was preferred over a separate branch because LootEnh keeps
+  evolving on Ascension. Two diverging branches would mean writing everything
+  twice, and the drift would be structural.
+
+### Changed
+
+- The double call to `InterfaceOptionsFrame_OpenToCategory` — a fifteen-year-old
+  community workaround for a 3.3.5 bug — moved out of `Frames.lua` and into
+  `Compat.lua`, where it only applies to the client that needs it.
+
+### Notes
+
+- Adding a new `.lua` file now requires listing it in **both** `.toc` files, and
+  both must declare the **same version**. A `.toc` cannot include another one.
+  Forgetting produces the worst symptom to diagnose: the addon looks broken on one
+  client only.
+
 ## [1.5.0] - 2026-08-03
 
 ### Added
